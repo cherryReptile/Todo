@@ -1,4 +1,4 @@
 CREATE TABLE users(
     id integer primary key autoincrement,
-    name text not null
+    name text not null unique
 );

@@ -4,5 +4,6 @@ CREATE TABLE todos
     name        text    not null,
     category_id integer not null,
     created_at  datetime,
-    updated_at  datetime
+    updated_at  datetime,
+    FOREIGN KEY (category_id) REFERENCES categories(id)
 );
