@@ -1,6 +1,6 @@
 package jobs
 
-import "github.com/pavel-one/GoStarter/internal/types"
+import "github.com/cherryReptile/Todo/internal/types"
 
 type TestJob struct {
 	types.BaseJob

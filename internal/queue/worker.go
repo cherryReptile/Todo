@@ -1,7 +1,7 @@
 package queue
 
 import (
-	"github.com/pavel-one/GoStarter/internal/interfaces"
+	"github.com/cherryReptile/Todo/internal/interfaces"
 )
 
 type JobWorker struct {

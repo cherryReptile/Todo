@@ -2,7 +2,7 @@ package models
 
 import (
 	"fmt"
-	"github.com/pavel-one/GoStarter/internal/database"
+	"github.com/cherryReptile/Todo/internal/database"
 )
 
 type User struct {

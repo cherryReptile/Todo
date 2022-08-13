@@ -2,9 +2,9 @@ package main
 
 import (
 	"fmt"
-	"github.com/pavel-one/GoStarter/internal/database"
-	"github.com/pavel-one/GoStarter/internal/queue"
-	"github.com/pavel-one/GoStarter/internal/router"
+	"github.com/cherryReptile/Todo/internal/database"
+	"github.com/cherryReptile/Todo/internal/queue"
+	"github.com/cherryReptile/Todo/internal/router"
 	"log"
 	"net/http"
 )

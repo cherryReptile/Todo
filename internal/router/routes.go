@@ -2,12 +2,12 @@ package router
 
 import (
 	"encoding/json"
-	"github.com/pavel-one/GoStarter/internal/database"
-	"github.com/pavel-one/GoStarter/internal/interfaces"
-	"github.com/pavel-one/GoStarter/internal/jobs"
-	"github.com/pavel-one/GoStarter/internal/models"
-	"github.com/pavel-one/GoStarter/internal/queue"
-	"github.com/pavel-one/GoStarter/internal/responses"
+	"github.com/cherryReptile/Todo/internal/database"
+	"github.com/cherryReptile/Todo/internal/interfaces"
+	"github.com/cherryReptile/Todo/internal/jobs"
+	"github.com/cherryReptile/Todo/internal/models"
+	"github.com/cherryReptile/Todo/internal/queue"
+	"github.com/cherryReptile/Todo/internal/responses"
 	"net/http"
 )
 

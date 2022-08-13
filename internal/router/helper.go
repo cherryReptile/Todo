@@ -2,7 +2,7 @@ package router
 
 import (
 	"encoding/json"
-	"github.com/pavel-one/GoStarter/internal/responses"
+	"github.com/cherryReptile/Todo/internal/responses"
 	"net/http"
 )
 

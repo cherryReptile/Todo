@@ -1,4 +1,4 @@
-module github.com/pavel-one/GoStarter
+module github.com/cherryReptile/Todo
 
 go 1.18
 
