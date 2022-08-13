@@ -5,5 +5,5 @@ CREATE TABLE categories
     user_id integer not null,
     created_at datetime,
     updated_at datetime,
-    FOREIGN KEY(user_id) REFERENCES users(id)
+    FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
 );
