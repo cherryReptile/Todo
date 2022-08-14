@@ -22,9 +22,17 @@ func (u *User) Create(db *database.SqlLite) error {
 	return err
 }
 
-//func (u *User) Get(db *database.SqlLite) (sql.Result, error) {
-//	result, err := db.DB.NamedExec(`SELECT * FROM users WHERE id=:id`, u)
-//
-//	fmt.Println(result)
-//	return result, err
-//}
+func (u *User) Get(db *database.SqlLite, id int) error {
+	rows, err := db.DB.Queryx(`SELECT * FROM users WHERE id=?`, id)
+
+	for rows.Next() {
+		err = rows.StructScan(u)
+	}
+
+	fmt.Println(u)
+	return err
+}
+
+func (u *User) Update() {
+	//
+}

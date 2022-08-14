@@ -18,6 +18,7 @@ func main() {
 	http.HandleFunc("/", route.Index)
 	http.HandleFunc("/job", route.Test)
 	http.HandleFunc("/user", route.CreateUser)
+	http.HandleFunc("/testUserGet", route.GetUser)
 	//http.HandleFunc("/category", route.CreateCategory)
 
 	err := http.ListenAndServe(":3000", nil)

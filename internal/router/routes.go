@@ -2,7 +2,6 @@ package router
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/cherryReptile/Todo/internal/database"
 	"github.com/cherryReptile/Todo/internal/jobs"
 	"github.com/cherryReptile/Todo/internal/models"
@@ -44,17 +43,15 @@ func (router *Router) CreateUser(w http.ResponseWriter, r *http.Request) {
 	err = u.Create(router.DB)
 	ResponseError(w, err)
 
-	fmt.Println(u)
-
 	responseJson(w, u)
 }
 
 func (router *Router) GetUser(w http.ResponseWriter, r *http.Request) {
-	keys, ok := r.URL.Query()["id"]
-	if !ok {
-		responseJson(w, responses.VersionResponse{Version: "1", Name: "suck dick"})
-	}
-	responseJson(w, keys)
+	u := new(models.User)
+	err := u.Get(router.DB, 1)
+	ResponseError(w, err)
+
+	responseJson(w, u)
 }
 
 //func (router *Router) CreateCategory(w http.ResponseWriter, r *http.Request) {
