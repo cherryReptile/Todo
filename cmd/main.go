@@ -5,6 +5,7 @@ import (
 	"github.com/cherryReptile/Todo/internal/database"
 	"github.com/cherryReptile/Todo/internal/queue"
 	"github.com/cherryReptile/Todo/internal/router"
+	"github.com/gorilla/mux"
 	"log"
 	"net/http"
 )
@@ -14,12 +15,16 @@ func main() {
 	sql := database.Connect()
 	defer sql.DB.Close()
 	route := router.NewRouter(&q, &sql)
+	r := mux.NewRouter()
+	s := r.Host("127.0.0.1:3000").Subrouter()
 
-	http.HandleFunc("/", route.Index)
-	http.HandleFunc("/job", route.Test)
-	http.HandleFunc("/user", route.CreateUser)
-	http.HandleFunc("/testUserGet", route.GetUser)
+	s.HandleFunc("/", route.Index).Methods("GET")
+	s.HandleFunc("/job", route.Test)
+	s.HandleFunc("/user", route.CreateUser).Methods("POST")
+	s.HandleFunc("/user/{id}", route.GetUser).Methods("GET")
+	s.HandleFunc("/user/{id}", route.DeleteUser).Methods("DELETE")
 	//http.HandleFunc("/category", route.CreateCategory)
+	http.Handle("/", r)
 
 	err := http.ListenAndServe(":3000", nil)
 	if err != nil {

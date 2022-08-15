@@ -10,7 +10,11 @@ func responseJson(w http.ResponseWriter, r interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 
 	response, err := json.Marshal(r)
-	ResponseError(w, err)
+
+	if err != nil {
+		handleError(w, err)
+		return
+	}
 
 	w.WriteHeader(http.StatusOK)
 	w.Write(response)
@@ -27,11 +31,4 @@ func handleError(w http.ResponseWriter, err error) {
 	r, _ := json.Marshal(response)
 
 	w.Write(r)
-}
-
-func ResponseError(w http.ResponseWriter, err error) {
-	if err != nil {
-		handleError(w, err)
-		return
-	}
 }

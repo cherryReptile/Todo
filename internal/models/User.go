@@ -1,6 +1,7 @@
 package models
 
 import (
+	"errors"
 	"fmt"
 	"github.com/cherryReptile/Todo/internal/database"
 )
@@ -25,14 +26,36 @@ func (u *User) Create(db *database.SqlLite) error {
 func (u *User) Get(db *database.SqlLite, id int) error {
 	rows, err := db.DB.Queryx(`SELECT * FROM users WHERE id=?`, id)
 
+	if err != nil {
+		return err
+	}
+
 	for rows.Next() {
 		err = rows.StructScan(u)
 	}
 
-	fmt.Println(u)
+	if u.ID == 0 {
+		err = errors.New("not found 404")
+		return err
+	}
+
 	return err
 }
 
 func (u *User) Update() {
 	//
+}
+
+func (u *User) Delete(db *database.SqlLite, id int) error {
+	result, err := db.DB.Exec(`DELETE FROM users WHERE id=?`, id)
+
+	if err != nil {
+		return err
+	}
+	check, _ := result.RowsAffected()
+
+	if check == 0 {
+		err = errors.New("not found 404")
+	}
+	return err
 }

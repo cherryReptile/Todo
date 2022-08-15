@@ -7,7 +7,9 @@ import (
 	"github.com/cherryReptile/Todo/internal/models"
 	"github.com/cherryReptile/Todo/internal/queue"
 	"github.com/cherryReptile/Todo/internal/responses"
+	"github.com/gorilla/mux"
 	"net/http"
+	"strconv"
 )
 
 type Router struct {
@@ -38,20 +40,51 @@ func (router *Router) Test(w http.ResponseWriter, r *http.Request) {
 func (router *Router) CreateUser(w http.ResponseWriter, r *http.Request) {
 	var u models.User
 	err := json.NewDecoder(r.Body).Decode(&u)
-	ResponseError(w, err)
 
+	if err != nil {
+		handleError(w, err)
+		return
+	}
 	err = u.Create(router.DB)
-	ResponseError(w, err)
 
+	if err != nil {
+		handleError(w, err)
+		return
+	}
 	responseJson(w, u)
 }
 
 func (router *Router) GetUser(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.Atoi(mux.Vars(r)["id"])
+
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+
 	u := new(models.User)
-	err := u.Get(router.DB, 1)
-	ResponseError(w, err)
+	err = u.Get(router.DB, id)
+
+	if err != nil {
+		handleError(w, err)
+		return
+	}
 
 	responseJson(w, u)
+}
+
+func (router *Router) DeleteUser(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.Atoi(mux.Vars(r)["id"])
+
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+
+	u := new(models.User)
+	err = u.Delete(router.DB, id)
+
+	w.WriteHeader(204)
 }
 
 //func (router *Router) CreateCategory(w http.ResponseWriter, r *http.Request) {
