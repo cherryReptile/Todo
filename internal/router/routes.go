@@ -37,7 +37,7 @@ func (router *Router) Test(w http.ResponseWriter, r *http.Request) {
 	router.Worker.Add(&j)
 }
 
-func (router *Router) CreateUser(w http.ResponseWriter, r *http.Request) {
+func (router *Router) UserCreate(w http.ResponseWriter, r *http.Request) {
 	var u models.User
 	err := json.NewDecoder(r.Body).Decode(&u)
 
@@ -45,6 +45,7 @@ func (router *Router) CreateUser(w http.ResponseWriter, r *http.Request) {
 		handleError(w, err)
 		return
 	}
+
 	err = u.Create(router.DB)
 
 	if err != nil {
@@ -54,7 +55,7 @@ func (router *Router) CreateUser(w http.ResponseWriter, r *http.Request) {
 	responseJson(w, u)
 }
 
-func (router *Router) GetUser(w http.ResponseWriter, r *http.Request) {
+func (router *Router) UserGet(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.Atoi(mux.Vars(r)["id"])
 
 	if err != nil {
@@ -73,7 +74,34 @@ func (router *Router) GetUser(w http.ResponseWriter, r *http.Request) {
 	responseJson(w, u)
 }
 
-func (router *Router) DeleteUser(w http.ResponseWriter, r *http.Request) {
+func (router *Router) UserUpdate(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.Atoi(mux.Vars(r)["id"])
+
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+
+	u := new(models.User)
+
+	err = json.NewDecoder(r.Body).Decode(&u)
+
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+
+	err = u.Update(router.DB, id)
+
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+
+	responseJson(w, u)
+}
+
+func (router *Router) UserDelete(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.Atoi(mux.Vars(r)["id"])
 
 	if err != nil {

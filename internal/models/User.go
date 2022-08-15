@@ -9,10 +9,11 @@ import (
 type User struct {
 	ID   int64  `json:"id" db:"id"`
 	Name string `json:"name" db:"name"`
+	TgID int    `json:"tg_id" db:"tg_id"`
 }
 
 func (u *User) Create(db *database.SqlLite) error {
-	result, err := db.DB.NamedExec("INSERT INTO users (name) VALUES (:name)", u)
+	result, err := db.DB.NamedExec("INSERT INTO users (name, tg_id) VALUES (:name, :tg_id)", u)
 
 	if err != nil {
 		return err
@@ -42,8 +43,16 @@ func (u *User) Get(db *database.SqlLite, id int) error {
 	return err
 }
 
-func (u *User) Update() {
-	//
+func (u *User) Update(db *database.SqlLite, id int) error {
+	_, err := db.DB.Exec("UPDATE users SET name=? WHERE id=?", u.Name, id)
+
+	if err != nil {
+		return err
+	}
+
+	err = u.Get(db, id)
+
+	return err
 }
 
 func (u *User) Delete(db *database.SqlLite, id int) error {
@@ -55,7 +64,7 @@ func (u *User) Delete(db *database.SqlLite, id int) error {
 	check, _ := result.RowsAffected()
 
 	if check == 0 {
-		err = errors.New("not found 404")
+		err = errors.New("no content")
 	}
 	return err
 }

@@ -20,13 +20,13 @@ func main() {
 
 	s.HandleFunc("/", route.Index).Methods("GET")
 	s.HandleFunc("/job", route.Test)
-	s.HandleFunc("/user", route.CreateUser).Methods("POST")
-	s.HandleFunc("/user/{id}", route.GetUser).Methods("GET")
-	s.HandleFunc("/user/{id}", route.DeleteUser).Methods("DELETE")
+	s.HandleFunc("/user", route.UserCreate).Methods("POST")
+	s.HandleFunc("/user/{id}", route.UserGet).Methods("GET")
+	s.HandleFunc("/user/{id}", route.UserUpdate).Methods("PATCH")
+	s.HandleFunc("/user/{id}", route.UserDelete).Methods("DELETE")
 	//http.HandleFunc("/category", route.CreateCategory)
-	http.Handle("/", r)
 
-	err := http.ListenAndServe(":3000", nil)
+	err := http.ListenAndServe(":3000", r)
 	if err != nil {
 		log.Fatalln(fmt.Sprintf("Error start server: %s", err.Error()))
 		return
