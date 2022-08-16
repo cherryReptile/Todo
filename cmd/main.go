@@ -13,7 +13,6 @@ import (
 func main() {
 	q := queue.Run()
 	sql := database.Connect()
-	defer sql.DB.Close()
 	route := router.NewRouter(&q, &sql)
 	r := mux.NewRouter()
 	s := r.Host("127.0.0.1:3000").Subrouter()

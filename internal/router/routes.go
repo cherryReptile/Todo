@@ -46,12 +46,16 @@ func (router *Router) UserCreate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = u.Create(router.DB)
+	db := router.DB.DB
+	result := db.Select("Name", "TgID").Create(&u)
 
-	if err != nil {
-		handleError(w, err)
+	if result.Error != nil {
+		handleError(w, result.Error)
 		return
 	}
+
+	db.First(&u, u.ID)
+
 	responseJson(w, u)
 }
 
@@ -64,10 +68,10 @@ func (router *Router) UserGet(w http.ResponseWriter, r *http.Request) {
 	}
 
 	u := new(models.User)
-	err = u.Get(router.DB, id)
+	result := router.DB.DB.First(&u, id)
 
-	if err != nil {
-		handleError(w, err)
+	if result.Error != nil {
+		handleError(w, result.Error)
 		return
 	}
 
@@ -83,7 +87,6 @@ func (router *Router) UserUpdate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	u := new(models.User)
-
 	err = json.NewDecoder(r.Body).Decode(&u)
 
 	if err != nil {
@@ -91,10 +94,18 @@ func (router *Router) UserUpdate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = u.Update(router.DB, id)
+	name := u.Name
+	result := router.DB.DB.First(&u, id)
 
-	if err != nil {
-		handleError(w, err)
+	if result.Error != nil {
+		handleError(w, result.Error)
+		return
+	}
+
+	result = router.DB.DB.Model(&u).Update("name", name)
+
+	if result.Error != nil {
+		handleError(w, result.Error)
 		return
 	}
 
@@ -110,24 +121,14 @@ func (router *Router) UserDelete(w http.ResponseWriter, r *http.Request) {
 	}
 
 	u := new(models.User)
-	err = u.Delete(router.DB, id)
+	result := router.DB.DB.First(&u, id)
+
+	if result.Error != nil {
+		handleError(w, result.Error)
+		return
+	}
+
+	router.DB.DB.Delete(&u)
 
 	w.WriteHeader(204)
 }
-
-//func (router *Router) CreateCategory(w http.ResponseWriter, r *http.Request) {
-//	var c models.Category
-//	err := json.NewDecoder(r.Body).Decode(&c)
-//
-//	if err != nil {
-//		handleError(w, err)
-//		return
-//	}
-//	err = c.Create(router.DB)
-//
-//	if err != nil {
-//		handleError(w, err)
-//		return
-//	}
-//	responseJson(w, c)
-//}
