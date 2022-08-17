@@ -2,13 +2,15 @@ package router
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/cherryReptile/Todo/internal/database"
 	"github.com/cherryReptile/Todo/internal/jobs"
 	"github.com/cherryReptile/Todo/internal/models"
 	"github.com/cherryReptile/Todo/internal/queue"
 	"github.com/cherryReptile/Todo/internal/responses"
+	"github.com/cherryReptile/Todo/internal/validations"
+	"github.com/gorilla/mux"
 	"net/http"
+	"strconv"
 )
 
 type Router struct {
@@ -36,40 +38,111 @@ func (router *Router) Test(w http.ResponseWriter, r *http.Request) {
 	router.Worker.Add(&j)
 }
 
-func (router *Router) CreateUser(w http.ResponseWriter, r *http.Request) {
+func (router *Router) UserCreate(w http.ResponseWriter, r *http.Request) {
 	var u models.User
 	err := json.NewDecoder(r.Body).Decode(&u)
-	ResponseError(w, err)
 
-	err = u.Create(router.DB)
-	ResponseError(w, err)
+	if err != nil {
+		handleError(w, err)
+		return
+	}
 
-	fmt.Println(u)
+	err = validations.CreatingValidate(&u)
+
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+
+	result := router.DB.DB.Select("Name", "TgID").Create(&u)
+
+	if result.Error != nil {
+		handleError(w, result.Error)
+		return
+	}
+
+	router.DB.DB.First(&u, u.ID)
 
 	responseJson(w, u)
 }
 
-func (router *Router) GetUser(w http.ResponseWriter, r *http.Request) {
-	keys, ok := r.URL.Query()["id"]
-	if !ok {
-		responseJson(w, responses.VersionResponse{Version: "1", Name: "suck dick"})
+func (router *Router) UserGet(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.Atoi(mux.Vars(r)["id"])
+
+	if err != nil {
+		handleError(w, err)
+		return
 	}
-	responseJson(w, keys)
+
+	u := new(models.User)
+	result := router.DB.DB.First(&u, id)
+
+	if result.Error != nil {
+		handleError(w, result.Error)
+		return
+	}
+
+	responseJson(w, u)
 }
 
-//func (router *Router) CreateCategory(w http.ResponseWriter, r *http.Request) {
-//	var c models.Category
-//	err := json.NewDecoder(r.Body).Decode(&c)
-//
-//	if err != nil {
-//		handleError(w, err)
-//		return
-//	}
-//	err = c.Create(router.DB)
-//
-//	if err != nil {
-//		handleError(w, err)
-//		return
-//	}
-//	responseJson(w, c)
-//}
+func (router *Router) UserUpdate(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.Atoi(mux.Vars(r)["id"])
+
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+
+	u := new(models.User)
+	err = json.NewDecoder(r.Body).Decode(&u)
+
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+
+	err = validations.UpdatingValidate(&u)
+
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+
+	name := u.Name
+	result := router.DB.DB.First(&u, id)
+
+	if result.Error != nil {
+		handleError(w, result.Error)
+		return
+	}
+
+	result = router.DB.DB.Model(&u).Update("name", name)
+
+	if result.Error != nil {
+		handleError(w, result.Error)
+		return
+	}
+
+	responseJson(w, u)
+}
+
+func (router *Router) UserDelete(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.Atoi(mux.Vars(r)["id"])
+
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+
+	u := new(models.User)
+	result := router.DB.DB.First(&u, id)
+
+	if result.Error != nil {
+		handleError(w, result.Error)
+		return
+	}
+
+	router.DB.DB.Delete(&u)
+
+	w.WriteHeader(204)
+}
