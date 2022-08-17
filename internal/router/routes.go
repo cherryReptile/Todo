@@ -7,6 +7,7 @@ import (
 	"github.com/cherryReptile/Todo/internal/models"
 	"github.com/cherryReptile/Todo/internal/queue"
 	"github.com/cherryReptile/Todo/internal/responses"
+	"github.com/cherryReptile/Todo/internal/validations"
 	"github.com/gorilla/mux"
 	"net/http"
 	"strconv"
@@ -46,15 +47,21 @@ func (router *Router) UserCreate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	db := router.DB.DB
-	result := db.Select("Name", "TgID").Create(&u)
+	err = validations.CreatingValidate(&u)
+
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+
+	result := router.DB.DB.Select("Name", "TgID").Create(&u)
 
 	if result.Error != nil {
 		handleError(w, result.Error)
 		return
 	}
 
-	db.First(&u, u.ID)
+	router.DB.DB.First(&u, u.ID)
 
 	responseJson(w, u)
 }
@@ -88,6 +95,13 @@ func (router *Router) UserUpdate(w http.ResponseWriter, r *http.Request) {
 
 	u := new(models.User)
 	err = json.NewDecoder(r.Body).Decode(&u)
+
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+
+	err = validations.UpdatingValidate(&u)
 
 	if err != nil {
 		handleError(w, err)
