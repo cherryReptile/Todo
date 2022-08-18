@@ -1,13 +1,12 @@
 package router
 
 import (
-	"encoding/json"
 	"github.com/cherryReptile/Todo/internal/database"
 	"github.com/cherryReptile/Todo/internal/jobs"
 	"github.com/cherryReptile/Todo/internal/models"
 	"github.com/cherryReptile/Todo/internal/queue"
+	"github.com/cherryReptile/Todo/internal/requests"
 	"github.com/cherryReptile/Todo/internal/responses"
-	"github.com/cherryReptile/Todo/internal/validations"
 	"github.com/gorilla/mux"
 	"net/http"
 	"strconv"
@@ -39,29 +38,21 @@ func (router *Router) Test(w http.ResponseWriter, r *http.Request) {
 }
 
 func (router *Router) UserCreate(w http.ResponseWriter, r *http.Request) {
-	var u models.User
-	err := json.NewDecoder(r.Body).Decode(&u)
+	reqU := requests.NewUser(r)
+	err := reqU.CheckBody()
 
 	if err != nil {
 		handleError(w, err)
 		return
 	}
 
-	err = validations.CreatingValidate(&u)
-
-	if err != nil {
-		handleError(w, err)
-		return
-	}
-
+	u := models.NewUser(reqU)
 	result := router.DB.DB.Select("Name", "TgID").Create(&u)
 
 	if result.Error != nil {
 		handleError(w, result.Error)
 		return
 	}
-
-	router.DB.DB.First(&u, u.ID)
 
 	responseJson(w, u)
 }
@@ -93,22 +84,15 @@ func (router *Router) UserUpdate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	reqU := requests.NewUser(r)
+	err = reqU.CheckBody()
+
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+
 	u := new(models.User)
-	err = json.NewDecoder(r.Body).Decode(&u)
-
-	if err != nil {
-		handleError(w, err)
-		return
-	}
-
-	err = validations.UpdatingValidate(&u)
-
-	if err != nil {
-		handleError(w, err)
-		return
-	}
-
-	name := u.Name
 	result := router.DB.DB.First(&u, id)
 
 	if result.Error != nil {
@@ -116,7 +100,7 @@ func (router *Router) UserUpdate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result = router.DB.DB.Model(&u).Update("name", name)
+	result = router.DB.DB.Model(&u).Update("name", reqU.Name)
 
 	if result.Error != nil {
 		handleError(w, result.Error)
