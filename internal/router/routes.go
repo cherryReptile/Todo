@@ -46,11 +46,11 @@ func (router *Router) UserCreate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	u := models.NewUser(reqU)
-	result := router.DB.DB.Select("Name", "TgID").Create(&u)
+	u := new(models.User)
+	err = u.Create(router.DB, reqU)
 
-	if result.Error != nil {
-		handleError(w, result.Error)
+	if err != nil {
+		handleError(w, err)
 		return
 	}
 
@@ -58,7 +58,7 @@ func (router *Router) UserCreate(w http.ResponseWriter, r *http.Request) {
 }
 
 func (router *Router) UserGet(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.Atoi(mux.Vars(r)["id"])
+	id, err := convertId("id", r)
 
 	if err != nil {
 		handleError(w, err)
@@ -66,10 +66,10 @@ func (router *Router) UserGet(w http.ResponseWriter, r *http.Request) {
 	}
 
 	u := new(models.User)
-	result := router.DB.DB.First(&u, id)
+	err = u.Get(router.DB, id)
 
-	if result.Error != nil {
-		handleError(w, result.Error)
+	if err != nil {
+		handleError(w, err)
 		return
 	}
 
@@ -77,7 +77,7 @@ func (router *Router) UserGet(w http.ResponseWriter, r *http.Request) {
 }
 
 func (router *Router) UserUpdate(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.Atoi(mux.Vars(r)["id"])
+	id, err := convertId("id", r)
 
 	if err != nil {
 		handleError(w, err)
@@ -93,17 +93,11 @@ func (router *Router) UserUpdate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	u := new(models.User)
-	result := router.DB.DB.First(&u, id)
+	u.Name = reqU.Name
+	err = u.Update(router.DB, id)
 
-	if result.Error != nil {
-		handleError(w, result.Error)
-		return
-	}
-
-	result = router.DB.DB.Model(&u).Update("name", reqU.Name)
-
-	if result.Error != nil {
-		handleError(w, result.Error)
+	if err != nil {
+		handleError(w, err)
 		return
 	}
 
@@ -111,22 +105,24 @@ func (router *Router) UserUpdate(w http.ResponseWriter, r *http.Request) {
 }
 
 func (router *Router) UserDelete(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.Atoi(mux.Vars(r)["id"])
+	id, err := convertId("id", r)
 
 	if err != nil {
 		handleError(w, err)
 		return
 	}
 
-	u := new(models.User)
-	result := router.DB.DB.First(&u, id)
+	err = new(models.User).Delete(router.DB, id)
 
-	if result.Error != nil {
-		handleError(w, result.Error)
+	if err != nil {
+		handleError(w, err)
 		return
 	}
 
-	router.DB.DB.Delete(&u)
-
 	w.WriteHeader(204)
+}
+
+func convertId(key string, r *http.Request) (uint, error) {
+	id, err := strconv.Atoi(mux.Vars(r)[key])
+	return uint(id), err
 }
