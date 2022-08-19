@@ -38,8 +38,8 @@ func (router *Router) Test(w http.ResponseWriter, r *http.Request) {
 }
 
 func (router *Router) UserCreate(w http.ResponseWriter, r *http.Request) {
-	reqU := requests.NewUser(r)
-	err := reqU.CheckBody()
+	reqU := new(requests.User)
+	err := reqU.CheckBody(r)
 
 	if err != nil {
 		handleError(w, err)
@@ -84,8 +84,8 @@ func (router *Router) UserUpdate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	reqU := requests.NewUser(r)
-	err = reqU.CheckBody()
+	reqU := new(requests.User)
+	err = reqU.CheckBody(r)
 
 	if err != nil {
 		handleError(w, err)
@@ -121,6 +121,11 @@ func (router *Router) UserDelete(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(204)
 }
+
+//
+//func (router *Router) CreateCategory(w http.ResponseWriter, r *http.Request) {
+//
+//}
 
 func convertId(key string, r *http.Request) (uint, error) {
 	id, err := strconv.Atoi(mux.Vars(r)[key])
