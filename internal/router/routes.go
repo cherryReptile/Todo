@@ -122,6 +122,11 @@ func (router *Router) UserDelete(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(204)
 }
 
+//
+//func (router *Router) CreateCategory(w http.ResponseWriter, r *http.Request) {
+//
+//}
+
 func convertId(key string, r *http.Request) (uint, error) {
 	id, err := strconv.Atoi(mux.Vars(r)[key])
 	return uint(id), err

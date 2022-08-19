@@ -1,17 +1,17 @@
 package database
 
 import (
-	"gorm.io/driver/sqlite"
-	"gorm.io/gorm"
+	"github.com/jmoiron/sqlx"
+	_ "github.com/mattn/go-sqlite3"
 	"log"
 )
 
 type SqlLite struct {
-	DB *gorm.DB
+	DB *sqlx.DB
 }
 
 func Connect() SqlLite {
-	db, err := gorm.Open(sqlite.Open("./tmp/db.db"), &gorm.Config{})
+	db, err := sqlx.Open("sqlite3", "./tmp/db.db")
 
 	if err != nil {
 		log.Fatal(err)

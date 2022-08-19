@@ -23,7 +23,7 @@ func main() {
 	s.HandleFunc("/user/{id}", route.UserGet).Methods("GET")
 	s.HandleFunc("/user/{id}", route.UserUpdate).Methods("PATCH")
 	s.HandleFunc("/user/{id}", route.UserDelete).Methods("DELETE")
-	//http.HandleFunc("/category", route.CreateCategory)
+	//s.HandleFunc("/category", route.CreateCategory)
 
 	err := http.ListenAndServe(":3000", r)
 	if err != nil {
