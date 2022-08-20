@@ -220,3 +220,104 @@ func (router *Router) CategoryDelete(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(204)
 }
+
+func (router *Router) TodoCreate(w http.ResponseWriter, r *http.Request) {
+	id, err := convertId("category_id", r)
+
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+
+	reqT := new(requests.Todo)
+	err = reqT.CheckBody(r)
+
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+
+	c := new(models.Category)
+	err = c.Get(router.DB, id)
+
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+
+	t := new(models.Todo)
+	t.CategoryID = c.ID
+	err = t.Create(router.DB, reqT)
+
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+
+	responseJson(w, t)
+}
+
+func (router *Router) TodoGet(w http.ResponseWriter, r *http.Request) {
+	id, err := convertId("id", r)
+
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+
+	t := new(models.Todo)
+	err = t.Get(router.DB, id)
+
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+
+	responseJson(w, t)
+}
+
+func (router *Router) TodoUpdate(w http.ResponseWriter, r *http.Request) {
+	id, err := convertId("id", r)
+
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+
+	reqT := new(requests.Todo)
+	err = reqT.CheckBody(r)
+
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+
+	t := new(models.Todo)
+	t.Name = reqT.Name
+	err = t.Update(router.DB, id)
+
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+
+	responseJson(w, t)
+}
+
+func (router *Router) TodoDelete(w http.ResponseWriter, r *http.Request) {
+	id, err := convertId("id", r)
+
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+
+	err = new(models.Todo).Delete(router.DB, id)
+
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+
+	w.WriteHeader(204)
+}

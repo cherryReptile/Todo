@@ -28,6 +28,10 @@ func main() {
 	s.HandleFunc("/category/{id}", route.CategoryGet).Methods("GET")
 	s.HandleFunc("/category/{id}", route.CategoryUpdate).Methods("PATCH")
 	s.HandleFunc("/category/{id}", route.CategoryDelete).Methods("DELETE")
+	s.HandleFunc("/{category_id}/todo", route.TodoCreate).Methods("POST")
+	s.HandleFunc("/todo/{id}", route.TodoGet).Methods("GET")
+	s.HandleFunc("/todo/{id}", route.TodoUpdate).Methods("PATCH")
+	s.HandleFunc("/todo/{id}", route.TodoDelete).Methods("DELETE")
 
 	err := http.ListenAndServe(":3000", r)
 	if err != nil {
