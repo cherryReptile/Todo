@@ -18,7 +18,7 @@ type Category struct {
 
 func (c *Category) Create(db *database.SqlLite, req *requests.Category) error {
 	c.Name = req.Name
-	c.CreatedAt = sql.NullTime{Time: time.Now()}
+	c.CreatedAt = sql.NullTime{Time: time.Now(), Valid: true}
 	result, err := db.DB.NamedExec("INSERT INTO categories (name, user_id, created_at) VALUES (:name, :user_id, :created_at)", c)
 
 	if err != nil {
