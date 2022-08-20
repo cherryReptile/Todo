@@ -3,7 +3,9 @@ package router
 import (
 	"encoding/json"
 	"github.com/cherryReptile/Todo/internal/responses"
+	"github.com/gorilla/mux"
 	"net/http"
+	"strconv"
 )
 
 func responseJson(w http.ResponseWriter, r interface{}) {
@@ -31,4 +33,9 @@ func handleError(w http.ResponseWriter, err error) {
 	r, _ := json.Marshal(response)
 
 	w.Write(r)
+}
+
+func convertId(key string, r *http.Request) (uint, error) {
+	id, err := strconv.Atoi(mux.Vars(r)[key])
+	return uint(id), err
 }

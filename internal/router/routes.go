@@ -7,9 +7,7 @@ import (
 	"github.com/cherryReptile/Todo/internal/queue"
 	"github.com/cherryReptile/Todo/internal/requests"
 	"github.com/cherryReptile/Todo/internal/responses"
-	"github.com/gorilla/mux"
 	"net/http"
-	"strconv"
 )
 
 type Router struct {
@@ -122,12 +120,103 @@ func (router *Router) UserDelete(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(204)
 }
 
-//
-//func (router *Router) CreateCategory(w http.ResponseWriter, r *http.Request) {
-//
-//}
+func (router *Router) CategoryCreate(w http.ResponseWriter, r *http.Request) {
+	id, err := convertId("user_id", r)
 
-func convertId(key string, r *http.Request) (uint, error) {
-	id, err := strconv.Atoi(mux.Vars(r)[key])
-	return uint(id), err
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+
+	reqC := new(requests.Category)
+	err = reqC.CheckBody(r)
+
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+
+	u := new(models.User)
+	err = u.Get(router.DB, id)
+
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+
+	c := new(models.Category)
+	c.UserID = u.ID
+	err = c.Create(router.DB, reqC)
+
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+
+	responseJson(w, c)
+}
+
+func (router *Router) CategoryGet(w http.ResponseWriter, r *http.Request) {
+	id, err := convertId("id", r)
+
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+
+	c := new(models.Category)
+	err = c.Get(router.DB, id)
+
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+
+	responseJson(w, c)
+}
+
+func (router *Router) CategoryUpdate(w http.ResponseWriter, r *http.Request) {
+	id, err := convertId("id", r)
+
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+
+	reqC := new(requests.Category)
+	err = reqC.CheckBody(r)
+
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+
+	c := new(models.Category)
+	c.Name = reqC.Name
+	err = c.Update(router.DB, id)
+
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+
+	responseJson(w, c)
+}
+
+func (router *Router) CategoryDelete(w http.ResponseWriter, r *http.Request) {
+	id, err := convertId("id", r)
+
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+
+	err = new(models.Category).Delete(router.DB, id)
+
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+
+	w.WriteHeader(204)
 }

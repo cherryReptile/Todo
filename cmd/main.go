@@ -13,6 +13,7 @@ import (
 func main() {
 	q := queue.Run()
 	sql := database.Connect()
+	defer sql.DB.Close()
 	route := router.NewRouter(&q, &sql)
 	r := mux.NewRouter()
 	s := r.Host("127.0.0.1:3000").Subrouter()
@@ -23,7 +24,10 @@ func main() {
 	s.HandleFunc("/user/{id}", route.UserGet).Methods("GET")
 	s.HandleFunc("/user/{id}", route.UserUpdate).Methods("PATCH")
 	s.HandleFunc("/user/{id}", route.UserDelete).Methods("DELETE")
-	//s.HandleFunc("/category", route.CreateCategory)
+	s.HandleFunc("/{user_id}/category", route.CategoryCreate).Methods("POST")
+	s.HandleFunc("/category/{id}", route.CategoryGet).Methods("GET")
+	s.HandleFunc("/category/{id}", route.CategoryUpdate).Methods("PATCH")
+	s.HandleFunc("/category/{id}", route.CategoryDelete).Methods("DELETE")
 
 	err := http.ListenAndServe(":3000", r)
 	if err != nil {

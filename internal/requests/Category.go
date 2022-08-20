@@ -5,7 +5,7 @@ import (
 )
 
 type Category struct {
-	Name string `json:"name" validate:"max:255,min:1"`
+	Name string `json:"name" validate:"max=255,min=1"`
 }
 
 func (c *Category) CheckBody(r *http.Request) error {
