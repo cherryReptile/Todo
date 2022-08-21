@@ -1,6 +1,8 @@
 package router
 
 import (
+	"fmt"
+	"github.com/cherryReptile/Todo/internal/controllers"
 	"github.com/cherryReptile/Todo/internal/database"
 	"github.com/cherryReptile/Todo/internal/jobs"
 	"github.com/cherryReptile/Todo/internal/models"
@@ -36,17 +38,11 @@ func (router *Router) Test(w http.ResponseWriter, r *http.Request) {
 }
 
 func (router *Router) UserCreate(w http.ResponseWriter, r *http.Request) {
+	controller := controllers.NewController(router.DB, r)
 	reqU := new(requests.User)
-	err := reqU.CheckBody(r)
-
-	if err != nil {
-		handleError(w, err)
-		return
-	}
-
 	u := new(models.User)
-	err = u.Create(router.DB, reqU)
-
+	err := controller.AbstractCreate(reqU, u)
+	fmt.Println(err)
 	if err != nil {
 		handleError(w, err)
 		return
@@ -74,33 +70,33 @@ func (router *Router) UserGet(w http.ResponseWriter, r *http.Request) {
 	responseJson(w, u)
 }
 
-func (router *Router) UserUpdate(w http.ResponseWriter, r *http.Request) {
-	id, err := convertId("id", r)
-
-	if err != nil {
-		handleError(w, err)
-		return
-	}
-
-	reqU := new(requests.User)
-	err = reqU.CheckBody(r)
-
-	if err != nil {
-		handleError(w, err)
-		return
-	}
-
-	u := new(models.User)
-	u.Name = reqU.Name
-	err = u.Update(router.DB, id)
-
-	if err != nil {
-		handleError(w, err)
-		return
-	}
-
-	responseJson(w, u)
-}
+//func (router *Router) UserUpdate(w http.ResponseWriter, r *http.Request) {
+//	id, err := convertId("id", r)
+//
+//	if err != nil {
+//		handleError(w, err)
+//		return
+//	}
+//
+//	reqU := new(requests.User)
+//	err = reqU.CheckBody(r)
+//
+//	if err != nil {
+//		handleError(w, err)
+//		return
+//	}
+//
+//	u := new(models.User)
+//	u.Name = reqU.Name
+//	err = u.Update(router.DB, id)
+//
+//	if err != nil {
+//		handleError(w, err)
+//		return
+//	}
+//
+//	responseJson(w, u)
+//}
 
 func (router *Router) UserDelete(w http.ResponseWriter, r *http.Request) {
 	id, err := convertId("id", r)
@@ -321,3 +317,60 @@ func (router *Router) TodoDelete(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(204)
 }
+
+//func AbstractCreate(req interfaces.RequestModelInterface, r *http.Request, db *database.SqlLite) (interfaces.ModelInterface, error) {
+//	u, err := AbstractCheck(req, r)
+//
+//	if err != nil {
+//		return nil, err
+//	}
+//
+//	err = u.Create(db)
+//
+//	if err != nil {
+//		return nil, err
+//	}
+//
+//	return u, err
+//}
+//
+//func AbstractCheck(req interfaces.RequestModelInterface, r *http.Request) (interfaces.ModelInterface, error) {
+//	u, err := req.CheckBody(r)
+//	return u, err
+//}
+
+//func AbstractGet(model interfaces.ModelInterface, r *http.Request, db *database.SqlLite) error {
+//	id, err := convertId("id", r)
+//
+//	if err != nil {
+//		return err
+//	}
+//
+//	err = model.Get(db, id)
+//
+//	return err
+//}
+
+//func (router Router) AbstractUpdate(model interfaces.ModelInterface, r *http.Request) error {
+//	id, err := convertId("id", r)
+//
+//	if err != nil {
+//		return err
+//	}
+//
+//	req := model.ItsRequest()
+//	err = AbstractCheck(req, r)
+//
+//	if err != nil {
+//		return err
+//	}
+//
+//	u := new(models.User)
+//	u.Name = reqU.Name
+//	err = u.Update(router.DB, id)
+//
+//	if err != nil {
+//		handleError(w, err)
+//		return
+//	}
+//}

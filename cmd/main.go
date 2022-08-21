@@ -22,7 +22,7 @@ func main() {
 	s.HandleFunc("/job", route.Test)
 	s.HandleFunc("/user", route.UserCreate).Methods("POST")
 	s.HandleFunc("/user/{id}", route.UserGet).Methods("GET")
-	s.HandleFunc("/user/{id}", route.UserUpdate).Methods("PATCH")
+	//s.HandleFunc("/user/{id}", route.UserUpdate).Methods("PATCH")
 	s.HandleFunc("/user/{id}", route.UserDelete).Methods("DELETE")
 	s.HandleFunc("/{user_id}/category", route.CategoryCreate).Methods("POST")
 	s.HandleFunc("/category/{id}", route.CategoryGet).Methods("GET")

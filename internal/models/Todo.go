@@ -16,6 +16,10 @@ type Todo struct {
 	UpdatedAt  sql.NullTime `json:"updated_at" db:"updated_at"`
 }
 
+func (t *Todo) ItsRequest() requests.Todo {
+	return requests.Todo{}
+}
+
 func (t *Todo) Create(db *database.SqlLite, req *requests.Todo) error {
 	t.Name = req.Name
 	t.CreatedAt = sql.NullTime{Time: time.Now(), Valid: true}

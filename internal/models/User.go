@@ -3,7 +3,7 @@ package models
 import (
 	"fmt"
 	"github.com/cherryReptile/Todo/internal/database"
-	"github.com/cherryReptile/Todo/internal/requests"
+	"strconv"
 )
 
 type User struct {
@@ -12,9 +12,15 @@ type User struct {
 	TgID uint   `json:"tg_id" db:"tg_id"`
 }
 
-func (u *User) Create(db *database.SqlLite, req *requests.User) error {
-	u.Name = req.Name
-	u.TgID = req.TgID
+func (u *User) Create(db *database.SqlLite, data map[string]string) error {
+	tgID, err := strconv.Atoi(data["tg_id"])
+
+	if err != nil {
+		return err
+	}
+
+	u.Name = data["name"]
+	u.TgID = uint(tgID)
 	result, err := db.DB.NamedExec("INSERT INTO users (name, tg_id) VALUES (:name, :tg_id)", u)
 
 	if err != nil {

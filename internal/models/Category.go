@@ -16,6 +16,10 @@ type Category struct {
 	UpdatedAt sql.NullTime `json:"updated_at" db:"updated_at"`
 }
 
+func (c *Category) ItsRequest() requests.Category {
+	return requests.Category{}
+}
+
 func (c *Category) Create(db *database.SqlLite, req *requests.Category) error {
 	c.Name = req.Name
 	c.CreatedAt = sql.NullTime{Time: time.Now(), Valid: true}
