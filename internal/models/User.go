@@ -3,7 +3,6 @@ package models
 import (
 	"fmt"
 	"github.com/cherryReptile/Todo/internal/database"
-	"github.com/cherryReptile/Todo/internal/requests"
 )
 
 type User struct {
@@ -12,9 +11,7 @@ type User struct {
 	TgID uint   `json:"tg_id" db:"tg_id"`
 }
 
-func (u *User) Create(db *database.SqlLite, req *requests.User) error {
-	u.Name = req.Name
-	u.TgID = req.TgID
+func (u *User) Create(db *database.SqlLite) error {
 	result, err := db.DB.NamedExec("INSERT INTO users (name, tg_id) VALUES (:name, :tg_id)", u)
 
 	if err != nil {
@@ -22,13 +19,19 @@ func (u *User) Create(db *database.SqlLite, req *requests.User) error {
 	}
 
 	id, err := result.LastInsertId()
-	u.ID = uint(id)
-	fmt.Println(result)
+
+	u.Get(db, uint(id))
 	return err
 }
 
 func (u *User) Get(db *database.SqlLite, id uint) error {
-	err := db.DB.Get(u, "SELECT * FROM users WHERE id=?", id)
+	err := db.DB.Get(u, "SELECT * FROM users WHERE id=? LIMIT 1", id)
+
+	return err
+}
+
+func (u *User) GetFromTg(db *database.SqlLite, tgId uint) error {
+	err := db.DB.Get(u, "SELECT * FROM users WHERE tg_id=? LIMIT 1", tgId)
 
 	return err
 }
