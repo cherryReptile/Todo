@@ -57,3 +57,48 @@ func (router *Router) Start(w http.ResponseWriter, r *http.Request) {
 
 	go tgs.HandleMethods(lastMessage)
 }
+
+func (router *Router) CategoryCreate(w http.ResponseWriter, r *http.Request) {
+	tgs := new(telegram.Service)
+	tgs.Init(router.DB)
+
+	updates, err := tgs.GetUpdates()
+
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+
+	lastMessage := updates.Result[len(updates.Result)-1]
+	tgs.HandleMethods(lastMessage)
+
+	for lastMessage.Message.Text == "/createCategory" {
+		updates, err = tgs.GetUpdates()
+		lastMessage = updates.Result[len(updates.Result)-1]
+
+		if err != nil {
+			break
+		}
+	}
+
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+
+	var user models.User
+	user.GetFromTg(router.DB, lastMessage.Message.From.Id)
+
+	var category models.Category
+	category.Name = lastMessage.Message.Text
+	category.UserID = user.ID
+
+	err = category.Create(router.DB)
+
+	if err != nil {
+		responseJson(w, r)
+		return
+	}
+
+	go tgs.SendCreated(lastMessage)
+}

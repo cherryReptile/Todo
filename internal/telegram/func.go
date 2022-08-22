@@ -91,6 +91,8 @@ func (s *Service) HandleMethods(message MessageWrapper) {
 	case "/start":
 		s.SendHello(message)
 		break
+	case "/createCategory":
+		s.SendCreate(message)
 	default:
 		s.SendDefault(message)
 		break
@@ -98,11 +100,21 @@ func (s *Service) HandleMethods(message MessageWrapper) {
 }
 
 func (s *Service) SendHello(message MessageWrapper) {
-	msg := fmt.Sprintf("Привет %v! \nДобро пожаловать в наш сервис, наши команды:\n/start - начало\n/list - показать мои todo", message.Message.From.FirstName)
+	msg := fmt.Sprintf("Привет %v! \nДобро пожаловать в наш сервис, наши команды:\n/start - начало\n/list - показать мои todo\n/categoryCreate - создать категорию", message.Message.From.FirstName)
 	s.SendMessage(message.Message.From.Id, msg)
 }
 
 func (s *Service) SendDefault(message MessageWrapper) {
 	msg := fmt.Sprintf("Извините, команда не распознана 😞, наши команды:\n/start - начало\n/list - показать мои todo")
+	s.SendMessage(message.Message.From.Id, msg)
+}
+
+func (s *Service) SendCreate(message MessageWrapper) {
+	msg := fmt.Sprintf("Введите название категории")
+	s.SendMessage(message.Message.From.Id, msg)
+}
+
+func (s *Service) SendCreated(message MessageWrapper) {
+	msg := fmt.Sprintf("Категория %v создана", message.Message.Text)
 	s.SendMessage(message.Message.From.Id, msg)
 }
