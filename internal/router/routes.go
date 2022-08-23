@@ -10,14 +10,16 @@ import (
 )
 
 type Router struct {
-	Worker *queue.JobWorker
-	DB     *database.SqlLite
+	Worker    *queue.JobWorker
+	DB        *database.SqlLite
+	TgService *telegram.Service
 }
 
-func NewRouter(Worker *queue.JobWorker, db *database.SqlLite) Router {
+func NewRouter(Worker *queue.JobWorker, db *database.SqlLite, service *telegram.Service) Router {
 	return Router{
-		Worker: Worker,
-		DB:     db,
+		Worker:    Worker,
+		DB:        db,
+		TgService: service,
 	}
 }
 
@@ -26,34 +28,38 @@ func (router *Router) Index(w http.ResponseWriter, r *http.Request) {
 }
 
 func (router *Router) Start(w http.ResponseWriter, r *http.Request) {
-	tgs := new(telegram.Service)
-	tgs.Init(router.DB)
-
-	updates, err := tgs.GetUpdates()
+	lastMessage, err := router.getLastMsg()
 
 	if err != nil {
 		handleError(w, err)
 		return
 	}
 
-	lastMessage := updates.Result[len(updates.Result)-1]
+	var user models.User
 
+	user.GetFromTg(router.DB, lastMessage.Message.From.Id)
+	c := make(chan error)
 	go func() {
-		var user models.User
-
-		user.GetFromTg(router.DB, lastMessage.Message.From.Id)
-
 		if user.ID == 0 {
 			user.TgID = lastMessage.Message.From.Id
 			user.Name = lastMessage.Message.From.FirstName + " " + lastMessage.Message.From.LastName
 
 			err = user.Create(router.DB)
-			if err != nil {
-				handleError(w, err)
-				return
-			}
+			c <- err
 		}
 	}()
+	go func() {
+		err = router.saveIncomingMsg(lastMessage)
+		c <- err
+	}()
+	go func() {
+		err = router.saveOutgoingMsg(lastMessage)
+		c <- err
+	}()
 
-	go tgs.HandleMethods(lastMessage)
+	err = <-c
+	if err != nil {
+		handleError(w, err)
+		return
+	}
 }

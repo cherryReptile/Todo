@@ -5,6 +5,7 @@ import (
 	"github.com/cherryReptile/Todo/internal/database"
 	"github.com/cherryReptile/Todo/internal/queue"
 	"github.com/cherryReptile/Todo/internal/router"
+	"github.com/cherryReptile/Todo/internal/telegram"
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
 	"log"
@@ -16,7 +17,9 @@ func main() {
 	q := queue.Run()
 	sql := database.Connect()
 	defer sql.DB.Close()
-	route := router.NewRouter(&q, &sql)
+	tgs := new(telegram.Service)
+	tgs.Init(&sql)
+	route := router.NewRouter(&q, &sql, tgs)
 	r := mux.NewRouter()
 	s := r.Host("127.0.0.1:3000").Subrouter()
 

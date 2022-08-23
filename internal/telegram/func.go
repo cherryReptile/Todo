@@ -46,13 +46,16 @@ func (s *Service) GetUpdates() (Updates, error) {
 	}
 
 	if !updates.OK {
-		return updates, errors.New(fmt.Sprintf("telegram not ok"))
+		err = errors.New(fmt.Sprintf("telegram not ok"))
+		return updates, err
 	}
 
 	return updates, nil
 }
 
-func (s *Service) SendMessage(chatId uint, message string) ([]byte, error) {
+func (s *Service) SendMessage(chatId uint, message string) (BotMessage, error) {
+	var responseMsg BotMessage
+
 	url := s.BotUrl + "/sendMessage"
 	method := "POST"
 
@@ -67,7 +70,7 @@ func (s *Service) SendMessage(chatId uint, message string) ([]byte, error) {
 	req, err := http.NewRequest(method, url, tmsg.ToReader())
 
 	if err != nil {
-		return nil, err
+		return responseMsg, err
 	}
 
 	req.Header.Add("Accept", "application/json")
@@ -76,49 +79,65 @@ func (s *Service) SendMessage(chatId uint, message string) ([]byte, error) {
 	res, err := client.Do(req)
 
 	if err != nil {
-		return nil, err
+		return responseMsg, err
 	}
 
 	defer res.Body.Close()
 
-	b, err := io.ReadAll(res.Body)
+	body, err := io.ReadAll(res.Body)
 
 	if err != nil {
-		return nil, err
+		return responseMsg, err
 	}
 
-	return b, nil
+	err = json.Unmarshal(body, &responseMsg)
+
+	if err != nil {
+		return responseMsg, err
+	}
+
+	if !responseMsg.Ok {
+		err = errors.New(fmt.Sprintf("telegram not ok"))
+		return responseMsg, err
+	}
+
+	return responseMsg, nil
 }
 
-func (s *Service) HandleMethods(message MessageWrapper) {
+func (s *Service) HandleMethods(message MessageWrapper) (BotMessage, error) {
+	var botMsg BotMessage
+	var err error
+
 	switch message.Message.Text {
 	case "/start":
-		s.SendHello(message)
+		botMsg, err = s.SendHello(message)
 		break
 	case "/createCategory":
-		s.SendCreate(message)
+		botMsg, err = s.SendCreate(message)
+		break
 	default:
-		s.SendDefault(message)
+		botMsg, err = s.SendDefault(message)
 		break
 	}
+	return botMsg, err
 }
 
-func (s *Service) SendHello(message MessageWrapper) {
+func (s *Service) SendHello(message MessageWrapper) (BotMessage, error) {
 	msg := fmt.Sprintf("Привет %v! \nДобро пожаловать в наш сервис, наши команды:\n/start - начало\n/list - показать мои todo\n/categoryCreate - создать категорию", message.Message.From.FirstName)
-	s.SendMessage(message.Message.From.Id, msg)
+	return s.SendMessage(message.Message.From.Id, msg)
 }
 
-func (s *Service) SendDefault(message MessageWrapper) {
+func (s *Service) SendDefault(message MessageWrapper) (BotMessage, error) {
 	msg := fmt.Sprintf("Извините, команда не распознана 😞, наши команды:\n/start - начало\n/list - показать мои todo")
-	s.SendMessage(message.Message.From.Id, msg)
+	return s.SendMessage(message.Message.From.Id, msg)
 }
 
-func (s *Service) SendCreate(message MessageWrapper) {
+func (s *Service) SendCreate(message MessageWrapper) (BotMessage, error) {
 	msg := fmt.Sprintf("Введите название категории")
-	s.SendMessage(message.Message.From.Id, msg)
+	return s.SendMessage(message.Message.From.Id, msg)
 }
 
-func (s *Service) SendCreated(message MessageWrapper) {
+func (s *Service) SendCreated(message MessageWrapper) (BotMessage, error) {
 	msg := fmt.Sprintf("Категория %v создана", message.Message.Text)
-	s.SendMessage(message.Message.From.Id, msg)
+	return s.SendMessage(message.Message.From.Id, msg)
 }

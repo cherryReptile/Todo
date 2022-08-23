@@ -9,8 +9,9 @@ import (
 type Message struct {
 	ID        uint           `json:"id" db:"id"`
 	Text      string         `json:"text" db:"text"`
-	MessageID uint           `json:"Message_id" db:"message_id"`
+	TgID      uint           `json:"tg_id" db:"tg_id"`
 	UserId    uint           `json:"user_id" db:"user_id"`
+	IsBot     bool           `json:"is_bot" db:"is_bot"`
 	Command   sql.NullString `json:"command" db:"command"`
 	CreatedAt sql.NullTime   `json:"created_at" db:"created_at"`
 	UpdatedAt sql.NullTime   `json:"updated_at" db:"updated_at"`
@@ -18,7 +19,7 @@ type Message struct {
 
 func (m *Message) Create(db *database.SqlLite) error {
 	m.CreatedAt = sql.NullTime{Time: time.Now(), Valid: true}
-	result, err := db.DB.NamedExec("INSERT INTO messages (text, message_id, user_id, command, created_at) VALUES (:name, :user_id, :created_at)", m)
+	result, err := db.DB.NamedExec("INSERT INTO messages (text, tg_id, user_id, is_bot, command, created_at) VALUES (:text, :tg_id, :user_id, :is_bot,:command, :created_at)", m)
 
 	if err != nil {
 		return err
@@ -31,7 +32,13 @@ func (m *Message) Create(db *database.SqlLite) error {
 }
 
 func (m *Message) Get(db *database.SqlLite, id uint) error {
-	err := db.DB.Get(m, "SELECT * FROM messages WHERE id=?", id)
+	err := db.DB.Get(m, "SELECT * FROM messages WHERE id=? LIMIT 1", id)
+
+	return err
+}
+
+func (m *Message) GetFromTg(db *database.SqlLite, tgId uint) error {
+	err := db.DB.Get(m, "SELECT * FROM messages WHERE tg_id=? LIMIT 1", tgId)
 
 	return err
 }
