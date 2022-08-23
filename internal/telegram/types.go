@@ -20,6 +20,22 @@ type Updates struct {
 	Result []MessageWrapper `json:"result"`
 }
 
+type BotMessage struct {
+	Ok     bool `json:"ok"`
+	Result struct {
+		MessageId int `json:"message_id"`
+		From      `json:"from"`
+		Chat      `json:"chat"`
+		Date      int    `json:"date"`
+		Text      string `json:"text"`
+	} `json:"result"`
+}
+
+type BadMessage struct {
+	ErrorCode   int    `json:"error_code"`
+	Description string `json:"description"`
+}
+
 type Entity struct {
 	Offset int    `json:"offset"`
 	Length int    `json:"length"`

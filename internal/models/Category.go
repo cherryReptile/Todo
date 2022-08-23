@@ -36,8 +36,7 @@ func (c *Category) Get(db *database.SqlLite, id uint) error {
 }
 
 func (c *Category) Update(db *database.SqlLite, id uint) error {
-	name := c.Name
-	result, err := db.DB.Exec("UPDATE categories SET name=? WHERE id=?", name, id)
+	result, err := db.DB.Exec("UPDATE categories SET name=? WHERE id=?", c.Name, id)
 	fmt.Println(result)
 
 	if err != nil {

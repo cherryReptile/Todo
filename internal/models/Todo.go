@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/cherryReptile/Todo/internal/database"
-	"github.com/cherryReptile/Todo/internal/requests"
 	"time"
 )
 
@@ -16,8 +15,7 @@ type Todo struct {
 	UpdatedAt  sql.NullTime `json:"updated_at" db:"updated_at"`
 }
 
-func (t *Todo) Create(db *database.SqlLite, req *requests.Todo) error {
-	t.Name = req.Name
+func (t *Todo) Create(db *database.SqlLite) error {
 	t.CreatedAt = sql.NullTime{Time: time.Now(), Valid: true}
 	result, err := db.DB.NamedExec("INSERT INTO todos (name, category_id, created_at) VALUES (:name, :category_id, :created_at)", t)
 

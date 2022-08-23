@@ -52,7 +52,7 @@ func (s *Service) GetUpdates() (Updates, error) {
 	return updates, nil
 }
 
-func (s *Service) SendMessage(chatId uint, message string) error {
+func (s *Service) SendMessage(chatId uint, message string) ([]byte, error) {
 	url := s.BotUrl + "/sendMessage"
 	method := "POST"
 
@@ -67,23 +67,27 @@ func (s *Service) SendMessage(chatId uint, message string) error {
 	req, err := http.NewRequest(method, url, tmsg.ToReader())
 
 	if err != nil {
-		return err
+		return nil, err
 	}
+
 	req.Header.Add("Accept", "application/json")
 	req.Header.Add("Content-Type", "application/json")
 
 	res, err := client.Do(req)
+
 	if err != nil {
-		return err
+		return nil, err
 	}
+
 	defer res.Body.Close()
 
-	_, err = io.ReadAll(res.Body)
+	b, err := io.ReadAll(res.Body)
+
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return b, nil
 }
 
 func (s *Service) HandleMethods(message MessageWrapper) {

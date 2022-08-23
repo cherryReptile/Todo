@@ -1,0 +1,11 @@
+CREATE TABLE messages
+(
+    id         integer primary key autoincrement,
+    text       text           not null,
+    message_id integer unique not null,
+    user_id    integer        not null,
+    command    text,
+    created_at datetime,
+    updated_at datetime,
+    FOREIGN KEY (user_id) REFERENCES users (id)
+);
