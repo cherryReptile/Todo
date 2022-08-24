@@ -27,26 +27,66 @@ func (router Router) saveIncomingMsg(lastMessage telegram.MessageWrapper) error 
 	message.Text = lastMessage.Message.Text
 	message.TgID = uint(lastMessage.Message.MessageId)
 	message.UserId = lastMessage.Message.From.Id
-	message.Command.String, message.Command.Valid = lastMessage.Message.Entities[0].Type, true
+
+	if lastMessage.Message.Entities != nil {
+		message.Command.String, message.Command.Valid = lastMessage.Message.Entities[0].Type, true
+	}
+
 	message.IsBot = lastMessage.Message.From.IsBot
 	err := message.Create(router.DB)
 
 	return err
 }
 
-func (router Router) saveOutgoingMsg(lastMessage telegram.MessageWrapper) error {
+func (router Router) saveHandledMsg(lastMessage telegram.MessageWrapper) error {
 	botMsg, err := router.TgService.HandleMethods(lastMessage)
 
 	if err != nil {
 		return err
 	}
 
+	err = router.saveBotMsg(botMsg)
+
+	return err
+}
+
+func (router Router) handleLastCommand(lastCommand models.Message, lastMessage telegram.MessageWrapper) error {
+	var err error
+	switch lastCommand.Text {
+	case "/categoryCreate":
+		var user models.User
+		user.GetFromTg(router.DB, lastMessage.Message.From.Id)
+
+		var category models.Category
+		category.Name = lastMessage.Message.Text
+		category.UserID = user.ID
+
+		err = category.Create(router.DB)
+
+		if err != nil {
+			break
+		}
+
+		botMsg, err := router.TgService.SendCreated(lastMessage)
+
+		if err != nil {
+			break
+		}
+
+		err = router.saveBotMsg(botMsg)
+		break
+	}
+	return err
+}
+
+func (router Router) saveBotMsg(botMsg telegram.BotMessage) error {
 	var message models.Message
 	message.Text = botMsg.Result.Text
 	message.TgID = uint(botMsg.Result.MessageId)
-	message.UserId = lastMessage.Message.From.Id
+	message.UserId = uint(botMsg.Result.Chat.Id)
 	message.IsBot = botMsg.Result.From.IsBot
-	err = message.Create(router.DB)
+
+	err := message.Create(router.DB)
 
 	return err
 }

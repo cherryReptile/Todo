@@ -24,7 +24,8 @@ func main() {
 	s := r.Host("127.0.0.1:3000").Subrouter()
 
 	s.HandleFunc("/", route.Index).Methods("GET")
-	s.HandleFunc("/test", route.Start)
+	s.HandleFunc("/start", route.Start)
+	s.HandleFunc("/categoryCreate", route.CategoryCreate)
 
 	err := http.ListenAndServe(":3000", r)
 	if err != nil {

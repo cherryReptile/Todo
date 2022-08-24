@@ -42,3 +42,15 @@ func (m *Message) GetFromTg(db *database.SqlLite, tgId uint) error {
 
 	return err
 }
+
+func (m *Message) GetLastCommand(db *database.SqlLite, userId uint) error {
+	m.UserId = userId
+	rows, err := db.DB.NamedQuery("SELECT * FROM messages WHERE user_id=:user_id AND command='bot_command' ORDER BY id DESC LIMIT 1", m)
+	for rows.Next() {
+		err = rows.StructScan(m)
+		if err != nil {
+			return err
+		}
+	}
+	return err
+}

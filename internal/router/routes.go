@@ -38,26 +38,59 @@ func (router *Router) Start(w http.ResponseWriter, r *http.Request) {
 	var user models.User
 
 	user.GetFromTg(router.DB, lastMessage.Message.From.Id)
-	c := make(chan error)
 	go func() {
 		if user.ID == 0 {
 			user.TgID = lastMessage.Message.From.Id
 			user.Name = lastMessage.Message.From.FirstName + " " + lastMessage.Message.From.LastName
 
 			err = user.Create(router.DB)
-			c <- err
+			if err != nil {
+				handleError(w, err)
+				return
+			}
 		}
 	}()
 	go func() {
 		err = router.saveIncomingMsg(lastMessage)
-		c <- err
-	}()
-	go func() {
-		err = router.saveOutgoingMsg(lastMessage)
-		c <- err
+		if err != nil {
+			handleError(w, err)
+			return
+		}
 	}()
 
-	err = <-c
+	err = router.saveHandledMsg(lastMessage)
+
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+}
+
+func (router Router) CategoryCreate(w http.ResponseWriter, r *http.Request) {
+	lastMessage, err := router.getLastMsg()
+
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+
+	go func() {
+		err = router.saveIncomingMsg(lastMessage)
+		if err != nil {
+			handleError(w, err)
+		}
+	}()
+
+	var lastCommand models.Message
+	lastCommand.GetLastCommand(router.DB, lastMessage.Message.From.Id)
+
+	if lastCommand.Command.String == "bot_command" && lastMessage.Message.Entities == nil {
+		router.handleLastCommand(lastCommand, lastMessage)
+		return
+	}
+
+	err = router.saveHandledMsg(lastMessage)
+
 	if err != nil {
 		handleError(w, err)
 		return

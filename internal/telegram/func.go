@@ -112,7 +112,7 @@ func (s *Service) HandleMethods(message MessageWrapper) (BotMessage, error) {
 	case "/start":
 		botMsg, err = s.SendHello(message)
 		break
-	case "/createCategory":
+	case "/categoryCreate":
 		botMsg, err = s.SendCreate(message)
 		break
 	default:
