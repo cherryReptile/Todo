@@ -26,6 +26,7 @@ func main() {
 	s.HandleFunc("/", route.Index).Methods("GET")
 	s.HandleFunc("/start", route.Start)
 	s.HandleFunc("/categoryCreate", route.CategoryCreate)
+	s.HandleFunc("/categoryList", route.CategoryList)
 
 	err := http.ListenAndServe(":3000", r)
 	if err != nil {

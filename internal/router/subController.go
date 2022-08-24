@@ -75,6 +75,25 @@ func (router Router) handleLastCommand(lastCommand models.Message, lastMessage t
 
 		err = router.saveBotMsg(botMsg)
 		break
+	case "/list":
+		var user models.User
+		user.GetFromTg(router.DB, lastMessage.Message.From.Id)
+
+		var category models.Category
+		categories, err := category.GetAllCategories(router.DB, user.ID)
+
+		if err != nil {
+			break
+		}
+
+		botMsg, err := router.TgService.SendList(lastMessage, categories)
+
+		if err != nil {
+			break
+		}
+
+		err = router.saveBotMsg(botMsg)
+		break
 	}
 	return err
 }

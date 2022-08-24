@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/cherryReptile/Todo/internal/models"
 	"io"
 	"net/http"
 	"time"
@@ -139,5 +140,14 @@ func (s *Service) SendCreate(message MessageWrapper) (BotMessage, error) {
 
 func (s *Service) SendCreated(message MessageWrapper) (BotMessage, error) {
 	msg := fmt.Sprintf("Категория %v создана", message.Message.Text)
+	return s.SendMessage(message.Message.From.Id, msg)
+}
+
+func (s *Service) SendList(message MessageWrapper, categories []models.Category) (BotMessage, error) {
+	var msg string
+	msg = "Твои категории: 👇\n"
+	for _, v := range categories {
+		msg += fmt.Sprintf("%v\n", v.Name)
+	}
 	return s.SendMessage(message.Message.From.Id, msg)
 }

@@ -35,6 +35,13 @@ func (c *Category) Get(db *database.SqlLite, id uint) error {
 	return err
 }
 
+func (c *Category) GetAllCategories(db *database.SqlLite, userId uint) ([]Category, error) {
+	var mm []Category
+	err := db.DB.Select(&mm, "SELECT * FROM categories WHERE user_id=? ORDER BY id", userId)
+
+	return mm, err
+}
+
 func (c *Category) Update(db *database.SqlLite, id uint) error {
 	result, err := db.DB.Exec("UPDATE categories SET name=? WHERE id=?", c.Name, id)
 	fmt.Println(result)
