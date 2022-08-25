@@ -84,7 +84,7 @@ func (router Router) CategoryCreate(w http.ResponseWriter, r *http.Request) {
 	var lastCommand models.Message
 	lastCommand.GetLastCommand(router.DB, lastMessage.Message.From.Id)
 
-	if lastCommand.Command.String == "bot_command" && lastMessage.Message.Entities == nil {
+	if lastMessage.Message.Entities == nil {
 		router.handleLastCommand(lastCommand, lastMessage)
 		return
 	}
@@ -115,7 +115,7 @@ func (router *Router) CategoryList(w http.ResponseWriter, r *http.Request) {
 	var lastCommand models.Message
 	lastCommand.GetLastCommand(router.DB, lastMessage.Message.From.Id)
 
-	if lastCommand.Command.String == "bot_command" && lastMessage.Message.Entities != nil {
+	if lastMessage.Message.Entities != nil {
 		router.handleLastCommand(lastCommand, lastMessage)
 		return
 	}

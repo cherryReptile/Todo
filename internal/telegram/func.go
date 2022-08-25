@@ -129,12 +129,12 @@ func (s *Service) SendHello(message MessageWrapper) (BotMessage, error) {
 }
 
 func (s *Service) SendDefault(message MessageWrapper) (BotMessage, error) {
-	msg := fmt.Sprintf("Извините, команда не распознана 😞, наши команды:\n/start - начало\n/list - показать мои todo")
+	msg := "Извините, команда не распознана 😞, наши команды:\n/start - начало\n/categoryCreate - создать категорию для todo\n/list - все категории"
 	return s.SendMessage(message.Message.From.Id, msg)
 }
 
 func (s *Service) SendCreate(message MessageWrapper) (BotMessage, error) {
-	msg := fmt.Sprintf("Введите название категории")
+	msg := "Введите название категории"
 	return s.SendMessage(message.Message.From.Id, msg)
 }
 
