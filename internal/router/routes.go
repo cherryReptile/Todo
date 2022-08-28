@@ -74,18 +74,21 @@ func (router Router) CategoryCreate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	go func() {
-		err = router.saveIncomingMsg(lastMessage)
-		if err != nil {
-			handleError(w, err)
-		}
-	}()
+	err = router.saveIncomingMsg(lastMessage)
+	if err != nil {
+		handleError(w, err)
+	}
 
-	var lastCommand models.Message
-	lastCommand.GetLastCommand(router.DB, lastMessage.Message.From.Id)
+	var msg models.Message
+	msgs, err := msg.GetLastTwo(router.DB, lastMessage.Message.From.Id)
 
-	if lastMessage.Message.Entities == nil {
-		router.handleLastCommand(lastCommand, lastMessage)
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+
+	if msgs[1].Command.Valid && !msgs[0].Command.Valid {
+		router.handleLastCommand(msgs[1], lastMessage)
 		return
 	}
 
@@ -112,15 +115,25 @@ func (router *Router) CategoryList(w http.ResponseWriter, r *http.Request) {
 		}
 	}()
 
-	var lastCommand models.Message
-	lastCommand.GetLastCommand(router.DB, lastMessage.Message.From.Id)
+	var user models.User
+	user.GetFromTg(router.DB, lastMessage.Message.From.Id)
 
-	if lastMessage.Message.Entities != nil {
-		router.handleLastCommand(lastCommand, lastMessage)
+	var category models.Category
+	categories, err := category.GetAllCategories(router.DB, user.ID)
+
+	if err != nil {
+		handleError(w, err)
 		return
 	}
 
-	err = router.saveHandledMsg(lastMessage)
+	botMsg, err := router.TgService.SendList(lastMessage, categories)
+
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+
+	err = router.saveBotMsg(botMsg)
 
 	if err != nil {
 		handleError(w, err)

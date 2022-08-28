@@ -50,9 +50,10 @@ func (router Router) saveHandledMsg(lastMessage telegram.MessageWrapper) error {
 	return err
 }
 
-func (router Router) handleLastCommand(lastCommand models.Message, lastMessage telegram.MessageWrapper) error {
+func (router Router) handleLastCommand(msg models.Message, lastMessage telegram.MessageWrapper) error {
 	var err error
-	switch lastCommand.Text {
+
+	switch msg.Text {
 	case "/categoryCreate":
 		var user models.User
 		user.GetFromTg(router.DB, lastMessage.Message.From.Id)
@@ -68,25 +69,6 @@ func (router Router) handleLastCommand(lastCommand models.Message, lastMessage t
 		}
 
 		botMsg, err := router.TgService.SendCreated(lastMessage)
-
-		if err != nil {
-			break
-		}
-
-		err = router.saveBotMsg(botMsg)
-		break
-	case "/list":
-		var user models.User
-		user.GetFromTg(router.DB, lastMessage.Message.From.Id)
-
-		var category models.Category
-		categories, err := category.GetAllCategories(router.DB, user.ID)
-
-		if err != nil {
-			break
-		}
-
-		botMsg, err := router.TgService.SendList(lastMessage, categories)
 
 		if err != nil {
 			break

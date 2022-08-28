@@ -54,3 +54,16 @@ func (m *Message) GetLastCommand(db *database.SqlLite, userId uint) error {
 	}
 	return err
 }
+
+func (m *Message) GetLastTwo(db *database.SqlLite, userId uint) ([]Message, error) {
+	var msgs []Message
+	err := db.DB.Select(&msgs, "SELECT * FROM messages WHERE user_id=:user_id AND is_bot=false ORDER BY id DESC LIMIT 2", userId)
+
+	return msgs, err
+}
+
+func (m *Message) GetLast(db *database.SqlLite, userId uint) error {
+	err := db.DB.Get(m, "SELECT * FROM messages WHERE id=? ORDER BY id DESC LIMIT 1", userId)
+
+	return err
+}
