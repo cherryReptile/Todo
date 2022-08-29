@@ -14,12 +14,19 @@ func (s *Service) GetUpdates() (Updates, error) {
 	var updates Updates
 
 	url := s.BotUrl + "/getUpdates"
-	method := "GET"
+	method := "POST"
 
 	client := &http.Client{
 		Timeout: time.Second * 20,
 	}
-	req, err := http.NewRequest(method, url, nil)
+
+	var allowedU []string
+
+	toUpdates := ToUpdates{
+		AllowedUpdates: allowedU,
+	}
+
+	req, err := http.NewRequest(method, url, ToReader(toUpdates))
 
 	if err != nil {
 		return updates, err
@@ -68,7 +75,7 @@ func (s *Service) SendMessage(chatId uint, message string) (BotMessage, error) {
 	client := &http.Client{
 		Timeout: time.Second * 30,
 	}
-	req, err := http.NewRequest(method, url, tmsg.ToReader())
+	req, err := http.NewRequest(method, url, ToReader(tmsg))
 
 	if err != nil {
 		return responseMsg, err
@@ -116,6 +123,8 @@ func (s *Service) HandleMethods(message MessageWrapper) (BotMessage, error) {
 	case "/categoryCreate":
 		botMsg, err = s.SendCreate(message)
 		break
+	case "/categoryUpdate":
+		botMsg, err = s.SendUpdate(message)
 	default:
 		botMsg, err = s.SendDefault(message)
 		break
@@ -149,5 +158,10 @@ func (s *Service) SendList(message MessageWrapper, categories []models.Category)
 	for _, v := range categories {
 		msg += fmt.Sprintf("%v\n", v.Name)
 	}
+	return s.SendMessage(message.Message.From.Id, msg)
+}
+
+func (s *Service) SendUpdate(message MessageWrapper) (BotMessage, error) {
+	msg := "Введите название категории(если названия одинаковы, то категорий будет несколько.\nЗатем просто отредактируйте сообщение)"
 	return s.SendMessage(message.Message.From.Id, msg)
 }
