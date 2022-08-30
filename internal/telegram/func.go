@@ -115,7 +115,7 @@ func (s *Service) SendMessage(chatId uint, message string) (BotMessage, error) {
 	return responseMsg, nil
 }
 
-func (s *Service) AnswerCallbackQuery(callbackId int, text string) error {
+func (s *Service) AnswerCallbackQuery(callbackId string, text string) error {
 	var responseMsg BotMessage
 
 	url := s.BotUrl + "/answerCallbackQuery"

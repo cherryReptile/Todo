@@ -140,3 +140,16 @@ func (router *Router) CategoryList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 }
+
+func (router *Router) AnswerToCallback(w http.ResponseWriter, r *http.Request) {
+	lastUpdate, err := router.getLastMsg()
+
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+
+	if lastUpdate.CallbackQuery.Id != "" {
+		router.TgService.AnswerCallbackQuery(lastUpdate.CallbackQuery.Id, "Just wait")
+	}
+}

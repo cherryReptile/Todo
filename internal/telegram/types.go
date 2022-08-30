@@ -56,8 +56,9 @@ type Message struct {
 }
 
 type MessageWrapper struct {
-	UpdateId int     `json:"update_id"`
-	Message  Message `json:"message"`
+	UpdateId      int           `json:"update_id"`
+	CallbackQuery CallbackQuery `json:"callback_query"`
+	Message       Message       `json:"message"`
 }
 
 //Callbacks
@@ -106,7 +107,7 @@ type ToUpdates struct {
 }
 
 type ToAnswerCallback struct {
-	CallbackQueryId int    `json:"callback_query_id"`
+	CallbackQueryId string `json:"callback_query_id"`
 	Text            string `json:"text"`
 }
 
