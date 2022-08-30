@@ -7,6 +7,7 @@ import (
 	"github.com/cherryReptile/Todo/internal/models"
 	"io"
 	"net/http"
+	"strconv"
 	"time"
 )
 
@@ -179,7 +180,7 @@ func (s *Service) SendInlineKeyboard(text string, chatId uint, categories []mode
 	inline.ReplyMarkup.InlineKeyboard = make([][1]InlineKeyboardBtn, len(categories))
 
 	for i, v := range categories {
-		inline.ReplyMarkup.InlineKeyboard[i][0].Text, inline.ReplyMarkup.InlineKeyboard[i][0].CallbackData = v.Name, "test"
+		inline.ReplyMarkup.InlineKeyboard[i][0].Text, inline.ReplyMarkup.InlineKeyboard[i][0].CallbackData = v.Name, strconv.Itoa(int(v.ID))
 	}
 
 	client := &http.Client{
