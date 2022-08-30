@@ -100,9 +100,10 @@ type ToMessage struct {
 }
 
 type ToUpdates struct {
-	Offset         int      `json:"offset"`
-	Limit          int      `json:"limit"`
-	Timeout        int      `json:"timeout"`
+	//For specify update request
+	//Offset         int      `json:"offset"`
+	//Limit          int      `json:"limit"`
+	//Timeout        int      `json:"timeout"`
 	AllowedUpdates []string `json:"allowed_updates"`
 }
 
