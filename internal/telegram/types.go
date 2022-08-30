@@ -71,10 +71,10 @@ type CallbackQuery struct {
 }
 
 type ReplyMarkup struct {
-	InlineKeyboard `json:"inline_keyboard"`
+	InlineKeyboard [][1]InlineKeyboardBtn `json:"inline_keyboard"`
 }
 
-type InlineKeyboard [][]struct {
+type InlineKeyboardBtn struct {
 	Text         string `json:"text"`
 	CallbackData string `json:"callback_data"`
 }
@@ -91,6 +91,8 @@ type BotMessage struct {
 	Result Message `json:"result"`
 }
 
+// Converting structs
+
 type ToMessage struct {
 	ChatId uint   `json:"chat_id"`
 	Text   string `json:"text"`
@@ -101,6 +103,17 @@ type ToUpdates struct {
 	Limit          int      `json:"limit"`
 	Timeout        int      `json:"timeout"`
 	AllowedUpdates []string `json:"allowed_updates"`
+}
+
+type ToAnswerCallback struct {
+	CallbackQueryId int    `json:"callback_query_id"`
+	Text            string `json:"text"`
+}
+
+type ToInlineKeyboardBtn struct {
+	ChatId      uint        `json:"chat_id"`
+	Text        string      `json:"text"`
+	ReplyMarkup ReplyMarkup `json:"reply_markup"`
 }
 
 func (s *Service) Init(db *database.SqlLite) {

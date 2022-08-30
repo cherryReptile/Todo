@@ -10,6 +10,8 @@ import (
 	"time"
 )
 
+// Tg metgods
+
 func (s *Service) GetUpdates() (Updates, error) {
 	var updates Updates
 
@@ -112,6 +114,117 @@ func (s *Service) SendMessage(chatId uint, message string) (BotMessage, error) {
 	return responseMsg, nil
 }
 
+func (s *Service) AnswerCallbackQuery(callbackId int, text string) error {
+	var responseMsg BotMessage
+
+	url := s.BotUrl + "/answerCallbackQuery"
+	method := "POST"
+
+	client := &http.Client{
+		Timeout: time.Second * 30,
+	}
+
+	toCallback := ToAnswerCallback{
+		CallbackQueryId: callbackId,
+		Text:            text,
+	}
+
+	req, err := http.NewRequest(method, url, ToReader(toCallback))
+
+	if err != nil {
+		return err
+	}
+
+	req.Header.Add("Accept", "application/json")
+	req.Header.Add("Content-Type", "application/json")
+
+	res, err := client.Do(req)
+
+	if err != nil {
+		return err
+	}
+
+	defer res.Body.Close()
+
+	body, err := io.ReadAll(res.Body)
+
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal(body, &responseMsg)
+
+	if err != nil {
+		return err
+	}
+
+	if !responseMsg.Ok {
+		err = errors.New(fmt.Sprintf("telegram not ok"))
+		return err
+	}
+
+	return nil
+}
+
+// List as inline keyboard button
+
+func (s *Service) SendInlineKeyboard(text string, chatId uint, categories []models.Category) (BotMessage, error) {
+	var responseMsg BotMessage
+
+	url := s.BotUrl + "/sendMessage"
+	method := "POST"
+
+	var inline ToInlineKeyboardBtn
+	inline.Text, inline.ChatId = text, chatId
+	inline.ReplyMarkup.InlineKeyboard = make([][1]InlineKeyboardBtn, len(categories))
+
+	for i, v := range categories {
+		inline.ReplyMarkup.InlineKeyboard[i][0].Text, inline.ReplyMarkup.InlineKeyboard[i][0].CallbackData = v.Name, "test"
+	}
+
+	client := &http.Client{
+		Timeout: time.Second * 30,
+	}
+
+	req, err := http.NewRequest(method, url, ToReader(inline))
+
+	if err != nil {
+		return responseMsg, err
+	}
+
+	req.Header.Add("Accept", "application/json")
+	req.Header.Add("Content-Type", "application/json")
+
+	res, err := client.Do(req)
+
+	if err != nil {
+		return responseMsg, err
+	}
+
+	defer res.Body.Close()
+
+	body, err := io.ReadAll(res.Body)
+
+	if err != nil {
+		return responseMsg, err
+	}
+
+	err = json.Unmarshal(body, &responseMsg)
+
+	if err != nil {
+		return responseMsg, err
+	}
+
+	if !responseMsg.Ok {
+		err = errors.New(fmt.Sprintf("telegram not ok"))
+		return responseMsg, err
+	}
+
+	return responseMsg, nil
+}
+
+//Messages layouts
+
 func (s *Service) HandleMethods(message MessageWrapper) (BotMessage, error) {
 	var botMsg BotMessage
 	var err error
@@ -123,8 +236,6 @@ func (s *Service) HandleMethods(message MessageWrapper) (BotMessage, error) {
 	case "/categoryCreate":
 		botMsg, err = s.SendCreate(message)
 		break
-	case "/categoryUpdate":
-		botMsg, err = s.SendUpdate(message)
 	default:
 		botMsg, err = s.SendDefault(message)
 		break
@@ -158,10 +269,5 @@ func (s *Service) SendList(message MessageWrapper, categories []models.Category)
 	for _, v := range categories {
 		msg += fmt.Sprintf("%v\n", v.Name)
 	}
-	return s.SendMessage(message.Message.From.Id, msg)
-}
-
-func (s *Service) SendUpdate(message MessageWrapper) (BotMessage, error) {
-	msg := "Введите название категории(если названия одинаковы, то категорий будет несколько.\nЗатем просто отредактируйте сообщение)"
 	return s.SendMessage(message.Message.From.Id, msg)
 }

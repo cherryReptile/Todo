@@ -126,7 +126,7 @@ func (router *Router) CategoryList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	botMsg, err := router.TgService.SendList(lastMessage, categories)
+	botMsg, err := router.TgService.SendInlineKeyboard("Твои категории: 👇\n", lastMessage.Message.From.Id, categories)
 
 	if err != nil {
 		handleError(w, err)
