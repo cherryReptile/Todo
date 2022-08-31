@@ -91,3 +91,9 @@ func (router Router) saveBotMsg(botMsg telegram.BotMessage) error {
 
 	return err
 }
+
+func (router *Router) AnswerToCallback(lastUpdate telegram.MessageWrapper) {
+	if lastUpdate.CallbackQuery.Id != "" {
+		router.TgService.AnswerCallbackQuery(lastUpdate.CallbackQuery.Id, "Just wait")
+	}
+}

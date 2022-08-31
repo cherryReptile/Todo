@@ -18,6 +18,8 @@ func (s *Service) HandleMethods(message MessageWrapper) (BotMessage, error) {
 	case "/categoryCreate":
 		botMsg, err = s.SendCreate(message)
 		break
+	//case "/categoryDelete":
+	//	botMsg, err = s.SendInlineKeyboard("Выберите какую категорию с её todo удалить:", message.Message.From.Id)
 	default:
 		botMsg, err = s.SendDefault(message)
 		break
