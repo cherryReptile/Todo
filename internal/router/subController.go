@@ -38,8 +38,31 @@ func (router Router) saveIncomingMsg(lastMessage telegram.MessageWrapper) error 
 	return err
 }
 
+func (router *Router) HandleMethods(message telegram.MessageWrapper) (telegram.BotMessage, error) {
+	var botMsg telegram.BotMessage
+	var err error
+
+	switch message.Message.Text {
+	case "/start":
+		botMsg, err = router.TgService.SendHello(message)
+		break
+	case "/categoryCreate":
+		botMsg, err = router.TgService.SendCreate(message)
+		break
+	case "/list":
+		err = router.List(message, "Твои категории(нажми чтобы увидеть todo): 👇\n")
+		break
+	case "/categoryDelete":
+		err = router.List(message, "Выберите какую категорию удалить 🗑\n")
+	default:
+		botMsg, err = router.TgService.SendDefault(message)
+		break
+	}
+	return botMsg, err
+}
+
 func (router Router) saveHandledMsg(lastMessage telegram.MessageWrapper) error {
-	botMsg, err := router.TgService.HandleMethods(lastMessage)
+	botMsg, err := router.HandleMethods(lastMessage)
 
 	if err != nil {
 		return err
@@ -53,22 +76,29 @@ func (router Router) saveHandledMsg(lastMessage telegram.MessageWrapper) error {
 func (router Router) handleLastCommand(msg models.Message, lastMessage telegram.MessageWrapper) error {
 	var err error
 
-	switch msg.Text {
-	case "/categoryCreate":
-		var user models.User
-		user.GetFromTg(router.DB, lastMessage.Message.From.Id)
-
-		var category models.Category
-		category.Name = lastMessage.Message.Text
-		category.UserID = user.ID
-
-		err = category.Create(router.DB)
-
-		if err != nil {
-			break
-		}
-
-		botMsg, err := router.TgService.SendCreated(lastMessage)
+	switch {
+	case lastMessage.Message.Text == "/start":
+		router.TgService.SendHello(lastMessage)
+		break
+	case lastMessage.Message.Text == "/categoryCreate":
+		router.TgService.SendCreate(lastMessage)
+		break
+	case msg.Text == "/categoryCreate" && uint(lastMessage.Message.MessageId)-msg.TgID == 2:
+		err = router.Create(lastMessage)
+		break
+	case lastMessage.Message.Text == "/list":
+		err = router.List(lastMessage, "Твои категории(нажми чтобы увидеть todo): 👇\n")
+		break
+	case msg.Text == "/list" && lastMessage.CallbackQuery.Id != "":
+		err = router.Get(lastMessage)
+		break
+	case lastMessage.Message.Text == "/categoryDelete":
+		err = router.List(lastMessage, "Выберите какую категорию удалить 🗑\n")
+		break
+	case msg.Text == "/categoryDelete" && lastMessage.CallbackQuery.Id != "":
+		err = router.Delete(lastMessage)
+	default:
+		botMsg, err := router.TgService.SendDefault(lastMessage)
 
 		if err != nil {
 			break

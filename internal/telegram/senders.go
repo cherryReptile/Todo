@@ -7,25 +7,25 @@ import (
 
 //Messages layouts
 
-func (s *Service) HandleMethods(message MessageWrapper) (BotMessage, error) {
-	var botMsg BotMessage
-	var err error
-
-	switch message.Message.Text {
-	case "/start":
-		botMsg, err = s.SendHello(message)
-		break
-	case "/categoryCreate":
-		botMsg, err = s.SendCreate(message)
-		break
-	//case "/categoryDelete":
-	//	botMsg, err = s.SendInlineKeyboard("Выберите какую категорию с её todo удалить:", message.Message.From.Id)
-	default:
-		botMsg, err = s.SendDefault(message)
-		break
-	}
-	return botMsg, err
-}
+//func (s *Service) HandleMethods(message MessageWrapper) (BotMessage, error) {
+//	var botMsg BotMessage
+//	var err error
+//
+//	switch message.Message.Text {
+//	case "/start":
+//		botMsg, err = s.SendHello(message)
+//		break
+//	case "/categoryCreate":
+//		botMsg, err = s.SendCreate(message)
+//		break
+//	//case "/categoryDelete":
+//	//	botMsg, err = s.SendInlineKeyboard("Выберите какую категорию с её todo удалить:", message.Message.From.Id)
+//	default:
+//		botMsg, err = s.SendDefault(message)
+//		break
+//	}
+//	return botMsg, err
+//}
 
 func (s *Service) SendHello(message MessageWrapper) (BotMessage, error) {
 	msg := fmt.Sprintf("Привет %v! \nДобро пожаловать в наш сервис, наши команды:\n/start - начало\n/list - показать мои todo\n/categoryCreate - создать категорию", message.Message.From.FirstName)
