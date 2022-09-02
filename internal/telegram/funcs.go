@@ -106,18 +106,15 @@ func (s *Service) AnswerCallbackQuery(callbackId string, text string) error {
 	return nil
 }
 
-// List as inline keyboard button
+// List as inline keyboard buttons
 
-func (s *Service) SendInlineKeyboard(text string, chatId uint, categories []models.Category) (BotMessage, error) {
+func (s *Service) SendInlineKeyboard(text string, chatId uint, model interface{}) (BotMessage, error) {
 	var responseMsg BotMessage
 
 	var inline ToInlineKeyboardBtn
 	inline.Text, inline.ChatId = text, chatId
-	inline.ReplyMarkup.InlineKeyboard = make([][1]InlineKeyboardBtn, len(categories))
 
-	for i, v := range categories {
-		inline.ReplyMarkup.InlineKeyboard[i][0].Text, inline.ReplyMarkup.InlineKeyboard[i][0].CallbackData = v.Name, strconv.Itoa(int(v.ID))
-	}
+	modelSwitcher(&inline, model)
 
 	res, err := s.DoRequest("sendMessage", "POST", inline)
 
@@ -141,7 +138,34 @@ func (s *Service) SendInlineKeyboard(text string, chatId uint, categories []mode
 	return responseMsg, nil
 }
 
-// Abstract for doing requests methods
+func (s *Service) EditMessageReplyMarkup(chatId uint, messageId int, model interface{}) (BotMessage, error) {
+	var responseMsg BotMessage
+	var inline ToInlineKeyboardBtn
+	inline.ChatId, inline.MessageId = chatId, messageId
+
+	modelSwitcher(&inline, model)
+
+	res, err := s.DoRequest("editMessageReplyMarkup", "POST", inline)
+
+	if err != nil {
+		return responseMsg, err
+	}
+
+	defer res.Body.Close()
+
+	err = s.AfterRequest(res, &responseMsg)
+
+	if err != nil {
+		return responseMsg, err
+	}
+
+	if !responseMsg.Ok {
+		err = errors.New(fmt.Sprintf("telegram not ok"))
+		return responseMsg, err
+	}
+
+	return responseMsg, nil
+}
 
 func (s *Service) BeforeRequest(tgMethod string, httpMethod string, paramStruct interface{}) (*http.Request, error) {
 	url := s.BotUrl + "/" + tgMethod
@@ -156,6 +180,20 @@ func (s *Service) BeforeRequest(tgMethod string, httpMethod string, paramStruct 
 	req.Header.Add("Content-Type", "application/json")
 
 	return req, nil
+}
+
+// Abstract for doing requests methods
+
+func modelSwitcher(inline *ToInlineKeyboardBtn, model interface{}) {
+	switch model.(type) {
+	case []models.Category:
+		categories := model.([]models.Category)
+		inline.ReplyMarkup.InlineKeyboard = make([][1]InlineKeyboardBtn, len(categories))
+
+		for i, v := range categories {
+			inline.ReplyMarkup.InlineKeyboard[i][0].Text, inline.ReplyMarkup.InlineKeyboard[i][0].CallbackData = v.Name, strconv.Itoa(int(v.ID))
+		}
+	}
 }
 
 func (s *Service) DoRequest(tgMethod string, httpMethod string, paramStruct interface{}) (*http.Response, error) {
@@ -178,7 +216,7 @@ func (s *Service) DoRequest(tgMethod string, httpMethod string, paramStruct inte
 	return res, nil
 }
 
-//\Here must be reference to struct for response
+//\Here must be a reference to struct for response
 
 func (s *Service) AfterRequest(res *http.Response, responseMsg interface{}) error {
 	body, err := io.ReadAll(res.Body)

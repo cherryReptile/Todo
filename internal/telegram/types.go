@@ -114,9 +114,12 @@ type ToAnswerCallback struct {
 
 type ToInlineKeyboardBtn struct {
 	ChatId      uint        `json:"chat_id"`
+	MessageId   int         `json:"message_id"`
 	Text        string      `json:"text"`
 	ReplyMarkup ReplyMarkup `json:"reply_markup"`
 }
+
+//For service struct
 
 func (s *Service) Init(db *database.SqlLite) {
 	s.DB = db
