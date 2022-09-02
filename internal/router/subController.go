@@ -1,6 +1,7 @@
 package router
 
 import (
+	"github.com/cherryReptile/Todo/internal/controllers"
 	"github.com/cherryReptile/Todo/internal/models"
 	"github.com/cherryReptile/Todo/internal/telegram"
 )
@@ -38,41 +39,6 @@ func (router Router) saveIncomingMsg(lastMessage telegram.MessageWrapper) error 
 	return err
 }
 
-func (router *Router) HandleMethods(message telegram.MessageWrapper) (telegram.BotMessage, error) {
-	var botMsg telegram.BotMessage
-	var err error
-
-	switch message.Message.Text {
-	case "/start":
-		botMsg, err = router.TgService.SendHello(message)
-		break
-	case "/categoryCreate":
-		botMsg, err = router.TgService.SendCreate(message)
-		break
-	case "/list":
-		err = router.List(message, "Твои категории(нажми чтобы увидеть todo): 👇\n")
-		break
-	case "/categoryDelete":
-		err = router.List(message, "Выберите какую категорию удалить 🗑\n")
-	default:
-		botMsg, err = router.TgService.SendDefault(message)
-		break
-	}
-	return botMsg, err
-}
-
-func (router Router) saveHandledMsg(lastMessage telegram.MessageWrapper) error {
-	botMsg, err := router.HandleMethods(lastMessage)
-
-	if err != nil {
-		return err
-	}
-
-	err = router.saveBotMsg(botMsg)
-
-	return err
-}
-
 func (router Router) handleLastCommand(msg models.Message, lastMessage telegram.MessageWrapper) error {
 	var err error
 
@@ -84,19 +50,19 @@ func (router Router) handleLastCommand(msg models.Message, lastMessage telegram.
 		router.TgService.SendCreate(lastMessage)
 		break
 	case msg.Text == "/categoryCreate" && uint(lastMessage.Message.MessageId)-msg.TgID == 2:
-		err = router.Create(lastMessage)
+		err = router.CategoryController.Create(lastMessage)
 		break
 	case lastMessage.Message.Text == "/list":
-		err = router.List(lastMessage, "Твои категории(нажми чтобы увидеть todo): 👇\n")
+		err = router.CategoryController.List(lastMessage, "Твои категории(нажми чтобы увидеть todo): 👇\n")
 		break
 	case msg.Text == "/list" && lastMessage.CallbackQuery.Id != "":
-		err = router.Get(lastMessage)
+		err = router.CategoryController.Get(lastMessage)
 		break
 	case lastMessage.Message.Text == "/categoryDelete":
-		err = router.List(lastMessage, "Выберите какую категорию удалить 🗑\n")
+		err = router.CategoryController.List(lastMessage, "Выберите какую категорию удалить 🗑\n")
 		break
 	case msg.Text == "/categoryDelete" && lastMessage.CallbackQuery.Id != "":
-		err = router.Delete(lastMessage)
+		err = router.CategoryController.Delete(lastMessage)
 	default:
 		botMsg, err := router.TgService.SendDefault(lastMessage)
 
@@ -104,26 +70,8 @@ func (router Router) handleLastCommand(msg models.Message, lastMessage telegram.
 			break
 		}
 
-		err = router.saveBotMsg(botMsg)
+		err = controllers.SaveBotMsg(botMsg, router.DB)
 		break
 	}
 	return err
-}
-
-func (router Router) saveBotMsg(botMsg telegram.BotMessage) error {
-	var message models.Message
-	message.Text = botMsg.Result.Text
-	message.TgID = uint(botMsg.Result.MessageId)
-	message.UserId = uint(botMsg.Result.Chat.Id)
-	message.IsBot = botMsg.Result.From.IsBot
-
-	err := message.Create(router.DB)
-
-	return err
-}
-
-func (router *Router) AnswerToCallback(lastUpdate telegram.MessageWrapper) {
-	if lastUpdate.CallbackQuery.Id != "" {
-		router.TgService.AnswerCallbackQuery(lastUpdate.CallbackQuery.Id, "Just wait")
-	}
 }
