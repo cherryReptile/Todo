@@ -35,6 +35,14 @@ func (t *Todo) Get(db *database.SqlLite, id uint) error {
 	return err
 }
 
+func (t Todo) GetAllFromCategoryId(db *database.SqlLite, categoryId uint) ([]Todo, error) {
+	var tt []Todo
+
+	err := db.DB.Select(&tt, "SELECT * FROM todos WHERE category_id=? ORDER BY id", categoryId)
+
+	return tt, err
+}
+
 func (t *Todo) Update(db *database.SqlLite, id uint) error {
 	name := t.Name
 	result, err := db.DB.Exec("UPDATE todos SET name=? WHERE id=?", name, id)

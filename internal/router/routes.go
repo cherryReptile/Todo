@@ -14,6 +14,7 @@ type Router struct {
 	DB                 *database.SqlLite
 	TgService          *telegram.Service
 	CategoryController *controllers.CategoryController
+	TodoController     *controllers.TodoController
 }
 
 func NewRouter(Worker *queue.JobWorker, db *database.SqlLite, service *telegram.Service) Router {
@@ -22,6 +23,7 @@ func NewRouter(Worker *queue.JobWorker, db *database.SqlLite, service *telegram.
 		DB:                 db,
 		TgService:          service,
 		CategoryController: controllers.NewCategoryController(db, service),
+		TodoController:     controllers.NewTodoController(db, service),
 	}
 }
 
@@ -49,22 +51,38 @@ func (router *Router) Start(w http.ResponseWriter, r *http.Request) {
 		}
 	}()
 
-	if lastMessage.CallbackQuery.Id == "" {
-		err = router.saveIncomingMsg(lastMessage)
-	}
+	err = router.saveIncomingMsg(lastMessage)
 
 	if err != nil {
 		handleError(w, err)
 		return
 	}
 
-	var msg models.Message
+	var lastCommand models.Message
+	var callback models.Callback
+	var penultimateMsg models.Message
 
 	switch {
 	case lastMessage.Message.MessageId != 0:
-		err = msg.GetLastCommand(router.DB, lastMessage.Message.From.Id)
+		err = lastCommand.GetLastCommand(router.DB, lastMessage.Message.From.Id)
+		if err != nil {
+			break
+		}
+		err = callback.GetLast(router.DB, lastMessage.Message.From.Id)
+		if err != nil {
+			break
+		}
+		err = penultimateMsg.GetLast(router.DB, lastMessage.Message.From.Id)
 	case lastMessage.CallbackQuery.Id != "":
-		err = msg.GetLastCommand(router.DB, uint(lastMessage.CallbackQuery.Chat.Id))
+		err = lastCommand.GetLastCommand(router.DB, uint(lastMessage.CallbackQuery.Chat.Id))
+		if err != nil {
+			break
+		}
+		err = callback.GetLast(router.DB, uint(lastMessage.CallbackQuery.Chat.Id))
+		if err != nil {
+			break
+		}
+		err = penultimateMsg.GetLast(router.DB, uint(lastMessage.CallbackQuery.Chat.Id))
 	}
 
 	if err != nil {
@@ -72,7 +90,7 @@ func (router *Router) Start(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = router.handleLastCommand(msg, lastMessage)
+	err = router.handleLastCommand(lastCommand, penultimateMsg, callback, lastMessage)
 
 	if err != nil {
 		handleError(w, err)

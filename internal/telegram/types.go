@@ -98,7 +98,11 @@ type ToMessage struct {
 	ChatId uint   `json:"chat_id"`
 	Text   string `json:"text"`
 }
-
+type ToEditMessage struct {
+	ChatId    uint   `json:"chat_id"`
+	MessageId int    `json:"message_id"`
+	Text      string `json:"text"`
+}
 type ToUpdates struct {
 	//For specify update request
 	//Offset         int      `json:"offset"`

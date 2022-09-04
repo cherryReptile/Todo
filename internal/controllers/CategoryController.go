@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"fmt"
 	"github.com/cherryReptile/Todo/internal/database"
 	"github.com/cherryReptile/Todo/internal/models"
 	"github.com/cherryReptile/Todo/internal/telegram"
@@ -81,7 +82,16 @@ func (c *CategoryController) Get(lastMessage telegram.MessageWrapper) error {
 
 	category.Get(c.DB, uint(id))
 
-	botMsg, err := c.TgService.SendMessage(uint(lastMessage.CallbackQuery.Chat.Id), category.Name)
+	var todo models.Todo
+	todos, err := todo.GetAllFromCategoryId(c.DB, category.ID)
+
+	var botMsg telegram.BotMessage
+
+	if todos == nil {
+		botMsg, err = c.TgService.SendMessage(uint(lastMessage.CallbackQuery.Chat.Id), fmt.Sprintf("У %v нет todo", category.Name))
+	} else {
+		botMsg, err = c.TgService.SendInlineKeyboard(fmt.Sprintf("Todo %v категории(нажми, чтобы удалить):", category.Name), uint(lastMessage.CallbackQuery.Chat.Id), todos)
+	}
 
 	if err != nil {
 		return err

@@ -37,12 +37,6 @@ func (m *Message) Get(db *database.SqlLite, id uint) error {
 	return err
 }
 
-func (m *Message) GetFromTg(db *database.SqlLite, tgId uint) error {
-	err := db.DB.Get(m, "SELECT * FROM messages WHERE tg_id=? LIMIT 1", tgId)
-
-	return err
-}
-
 func (m *Message) GetLastCommand(db *database.SqlLite, userId uint) error {
 	m.UserId = userId
 	rows, err := db.DB.NamedQuery("SELECT * FROM messages WHERE user_id=:user_id AND command='bot_command' ORDER BY id DESC LIMIT 1", m)
@@ -63,7 +57,7 @@ func (m *Message) GetLastTwo(db *database.SqlLite, userId uint) ([]Message, erro
 }
 
 func (m *Message) GetLast(db *database.SqlLite, userId uint) error {
-	err := db.DB.Get(m, "SELECT * FROM messages WHERE id=? ORDER BY id DESC LIMIT 1", userId)
+	err := db.DB.Get(m, "SELECT * FROM messages WHERE user_id=? ORDER BY id DESC LIMIT 1", userId)
 
 	return err
 }

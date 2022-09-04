@@ -167,6 +167,35 @@ func (s *Service) EditMessageReplyMarkup(chatId uint, messageId int, model inter
 	return responseMsg, nil
 }
 
+func (s *Service) EditMessageText(chatId uint, messageId int, text string) (BotMessage, error) {
+	var responseMsg BotMessage
+
+	tmsg := ToEditMessage{
+		chatId, messageId, text,
+	}
+
+	res, err := s.DoRequest("editMessageText", "POST", tmsg)
+
+	if err != nil {
+		return responseMsg, err
+	}
+
+	defer res.Body.Close()
+
+	err = s.AfterRequest(res, &responseMsg)
+
+	if err != nil {
+		return responseMsg, err
+	}
+
+	if !responseMsg.Ok {
+		err = errors.New(fmt.Sprintf("telegram not ok"))
+		return responseMsg, err
+	}
+
+	return responseMsg, nil
+}
+
 func (s *Service) BeforeRequest(tgMethod string, httpMethod string, paramStruct interface{}) (*http.Request, error) {
 	url := s.BotUrl + "/" + tgMethod
 
@@ -191,6 +220,13 @@ func modelSwitcher(inline *ToInlineKeyboardBtn, model interface{}) {
 		inline.ReplyMarkup.InlineKeyboard = make([][1]InlineKeyboardBtn, len(categories))
 
 		for i, v := range categories {
+			inline.ReplyMarkup.InlineKeyboard[i][0].Text, inline.ReplyMarkup.InlineKeyboard[i][0].CallbackData = v.Name, strconv.Itoa(int(v.ID))
+		}
+	case []models.Todo:
+		todos := model.([]models.Todo)
+		inline.ReplyMarkup.InlineKeyboard = make([][1]InlineKeyboardBtn, len(todos))
+
+		for i, v := range todos {
 			inline.ReplyMarkup.InlineKeyboard[i][0].Text, inline.ReplyMarkup.InlineKeyboard[i][0].CallbackData = v.Name, strconv.Itoa(int(v.ID))
 		}
 	}

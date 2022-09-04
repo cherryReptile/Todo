@@ -1,6 +1,7 @@
 package router
 
 import (
+	"encoding/json"
 	"github.com/cherryReptile/Todo/internal/controllers"
 	"github.com/cherryReptile/Todo/internal/models"
 	"github.com/cherryReptile/Todo/internal/telegram"
@@ -23,48 +24,72 @@ func (router *Router) getLastMsg() (telegram.MessageWrapper, error) {
 }
 
 func (router Router) saveIncomingMsg(lastMessage telegram.MessageWrapper) error {
-	var message models.Message
+	var err error
 
-	message.Text = lastMessage.Message.Text
-	message.TgID = uint(lastMessage.Message.MessageId)
-	message.UserId = lastMessage.Message.From.Id
+	switch {
+	case lastMessage.Message.Text != "":
+		var message models.Message
 
-	if lastMessage.Message.Entities != nil {
-		message.Command.String, message.Command.Valid = lastMessage.Message.Entities[0].Type, true
+		message.Text = lastMessage.Message.Text
+		message.TgID = uint(lastMessage.Message.MessageId)
+		message.UserId = lastMessage.Message.From.Id
+
+		if lastMessage.Message.Entities != nil {
+			message.Command.String, message.Command.Valid = lastMessage.Message.Entities[0].Type, true
+		}
+
+		message.IsBot = lastMessage.Message.From.IsBot
+		err = message.Create(router.DB)
+	case lastMessage.CallbackQuery.Id != "":
+		var callback models.Callback
+		bytes, err := json.Marshal(&lastMessage.CallbackQuery)
+
+		if err != nil {
+			break
+		}
+
+		callback.Json = string(bytes)
+		callback.TgID = uint(lastMessage.CallbackQuery.Message.MessageId)
+		callback.UserId = uint(lastMessage.CallbackQuery.Chat.Id)
+		err = callback.Create(router.DB)
 	}
-
-	message.IsBot = lastMessage.Message.From.IsBot
-	err := message.Create(router.DB)
 
 	return err
 }
 
-func (router Router) handleLastCommand(msg models.Message, lastMessage telegram.MessageWrapper) error {
+func (router Router) handleLastCommand(lastCommand models.Message, lastMsg models.Message, callback models.Callback, lastUpdate telegram.MessageWrapper) error {
 	var err error
 
 	switch {
-	case lastMessage.Message.Text == "/start":
-		router.TgService.SendHello(lastMessage)
+	case lastUpdate.Message.Text == "/start":
+		router.TgService.SendHello(lastUpdate)
 		break
-	case lastMessage.Message.Text == "/categoryCreate":
-		router.TgService.SendCreate(lastMessage)
+	case lastUpdate.Message.Text == "/categoryCreate":
+		router.TgService.SendCreate(lastUpdate)
 		break
-	case msg.Text == "/categoryCreate" && uint(lastMessage.Message.MessageId)-msg.TgID == 2:
-		err = router.CategoryController.Create(lastMessage)
+	case lastCommand.Text == "/categoryCreate" && uint(lastUpdate.Message.MessageId)-lastCommand.TgID == 2:
+		err = router.CategoryController.Create(lastUpdate)
 		break
-	case lastMessage.Message.Text == "/list":
-		err = router.CategoryController.List(lastMessage, "Твои категории(нажми чтобы увидеть todo): 👇\n")
+	case lastUpdate.Message.Text == "/list":
+		err = router.CategoryController.List(lastUpdate, "Твои категории(нажми чтобы увидеть todo): 👇\n")
 		break
-	case msg.Text == "/list" && lastMessage.CallbackQuery.Id != "":
-		err = router.CategoryController.Get(lastMessage)
+	case lastCommand.Text == "/list" && lastUpdate.CallbackQuery.Id != "":
+		err = router.CategoryController.Get(lastUpdate)
 		break
-	case lastMessage.Message.Text == "/categoryDelete":
-		err = router.CategoryController.List(lastMessage, "Выберите какую категорию удалить 🗑\n")
+	case lastUpdate.Message.Text == "/categoryDelete":
+		err = router.CategoryController.List(lastUpdate, "Выберите какую категорию удалить 🗑:\n")
 		break
-	case msg.Text == "/categoryDelete" && lastMessage.CallbackQuery.Id != "":
-		err = router.CategoryController.Delete(lastMessage)
+	case lastCommand.Text == "/categoryDelete" && lastUpdate.CallbackQuery.Id != "":
+		err = router.CategoryController.Delete(lastUpdate)
+		break
+	case lastUpdate.Message.Text == "/todoCreate":
+		err = router.CategoryController.List(lastUpdate, "Выберите в какой категории создать todo ✍️\n")
+		break
+	case lastCommand.Text == "/todoCreate" && callback.TgID == lastCommand.TgID+1:
+		err = router.TodoController.Create(lastUpdate, lastMsg, callback)
+		break
 	default:
-		botMsg, err := router.TgService.SendDefault(lastMessage)
+		botMsg, err := router.TgService.SendDefault(lastUpdate)
 
 		if err != nil {
 			break
