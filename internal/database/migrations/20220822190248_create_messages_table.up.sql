@@ -8,5 +8,5 @@ CREATE TABLE messages
     command    text,
     created_at datetime,
     updated_at datetime,
-    FOREIGN KEY (user_id) REFERENCES users (id)
+    FOREIGN KEY (user_id) REFERENCES users (tg_id)
 );
