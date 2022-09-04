@@ -86,7 +86,7 @@ func (router Router) handleLastCommand(lastCommand models.Message, lastMsg model
 		err = router.CategoryController.List(lastUpdate, "Выберите в какой категории создать todo ✍️\n")
 		break
 	case lastCommand.Text == "/todoCreate" && callback.TgID == lastCommand.TgID+1:
-		err = router.TodoController.Create(lastUpdate, lastMsg, callback)
+		err = router.TodoController.Create(lastUpdate, callback)
 		break
 	default:
 		botMsg, err := router.TgService.SendDefault(lastUpdate)
