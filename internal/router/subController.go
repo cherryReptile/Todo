@@ -59,13 +59,14 @@ func (router Router) saveIncomingMsg(lastMessage telegram.MessageWrapper) error 
 
 func (router Router) handleLastCommand(lastCommand models.Message, modelFromCallback telegram.ModelFromCallback, lastUpdate telegram.MessageWrapper) error {
 	var err error
+	var botMsg telegram.BotMessage
 
 	switch {
 	case lastUpdate.Message.Text == "/start":
-		router.TgService.SendHello(lastUpdate)
+		_, err = router.TgService.SendHello(lastUpdate)
 		break
 	case lastUpdate.Message.Text == "/categoryCreate":
-		router.TgService.SendCreate(lastUpdate)
+		_, err = router.TgService.SendCreate(lastUpdate)
 		break
 	case lastCommand.Text == "/categoryCreate" && uint(lastUpdate.Message.MessageId)-lastCommand.TgID == 2:
 		err = router.CategoryController.Create(lastUpdate)
@@ -87,24 +88,24 @@ func (router Router) handleLastCommand(lastCommand models.Message, modelFromCall
 	case lastUpdate.Message.Text == "/todo":
 		err = router.CategoryController.List(lastUpdate, "Выберите в какой категории создать todo ✍️\n")
 		break
-	case lastCommand.Text == "/todo" && modelFromCallback.Model == "category" || modelFromCallback.Model == "todo":
+	case lastCommand.Text == "/todo" && lastUpdate.CallbackQuery.Id != "":
 		err = router.TodoController.Create(lastUpdate, modelFromCallback)
 		break
-	//case lastCommand.Text == "/todo" && modelFromCallback.Model == "todo":
-	//	err = router.TodoController.Delete(lastUpdate, modelFromCallback)
-	//case lastCommand.Text == "/todoCreate":
-	//	err = router.CategoryController.List(lastUpdate, "Выберите в какой категории создать todo ✍️\n")
-	//case lastCommand.Text == "/todoCreate" && modelFromCallback.Model == "":
-
+	case lastCommand.Text == "/todo" && lastUpdate.CallbackQuery.Id == "":
+		err = router.TodoController.DefaultCreate(lastUpdate, modelFromCallback)
 	default:
-		botMsg, err := router.TgService.SendDefault(lastUpdate)
-
-		if err != nil {
-			break
-		}
-
-		err = controllers.SaveBotMsg(botMsg, router.DB)
+		botMsg, err = router.TgService.SendDefault(lastUpdate)
 		break
 	}
-	return err
+
+	if err != nil {
+		return err
+	}
+
+	err = controllers.SaveBotMsg(botMsg, router.DB)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

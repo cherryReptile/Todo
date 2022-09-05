@@ -55,7 +55,13 @@ func (c *CategoryController) List(lastMessage telegram.MessageWrapper, text stri
 		return err
 	}
 
-	botMsg, err := c.TgService.SendInlineKeyboard(text, lastMessage.Message.From.Id, categories)
+	var botMsg telegram.BotMessage
+
+	if categories == nil {
+		botMsg, err = c.TgService.SendMessage(lastMessage.Message.From.Id, "У вас ещё нет категорий, используйте 👉 /categoryCreate")
+	} else {
+		botMsg, err = c.TgService.SendInlineKeyboard(text, lastMessage.Message.From.Id, categories)
+	}
 
 	if err != nil {
 		return err
@@ -83,7 +89,7 @@ func (c *CategoryController) Get(lastMessage telegram.MessageWrapper, modelFromC
 	var botMsg telegram.BotMessage
 
 	if todos == nil {
-		botMsg, err = c.TgService.SendMessage(uint(lastMessage.CallbackQuery.Chat.Id), fmt.Sprintf("У %v нет todo", category.Name))
+		botMsg, err = c.TgService.SendMessage(uint(lastMessage.CallbackQuery.Chat.Id), fmt.Sprintf("У %v нет todo, используйте /todo, чтобы создать", category.Name))
 	} else {
 		botMsg, err = c.TgService.SendInlineKeyboard(fmt.Sprintf("Todo %v категории(нажми, чтобы удалить):", category.Name), uint(lastMessage.CallbackQuery.Chat.Id), todos)
 	}
