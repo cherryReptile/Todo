@@ -61,3 +61,9 @@ func (m *Message) GetLast(db *database.SqlLite, userId uint) error {
 
 	return err
 }
+
+func (m *Message) GetLastBot(db *database.SqlLite, userId uint) error {
+	err := db.DB.Get(m, "SELECT * FROM messages WHERE user_id=? AND is_bot=true ORDER BY id DESC LIMIT 1", userId)
+
+	return err
+}

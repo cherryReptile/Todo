@@ -7,12 +7,12 @@ import (
 //Messages layouts
 
 func (s *Service) SendHello(message MessageWrapper) (BotMessage, error) {
-	msg := fmt.Sprintf("Привет %v! \nДобро пожаловать в наш сервис, наши команды:\n/start - начало\n/list - показать мои todo\n/categoryCreate - создать категорию", message.Message.From.FirstName)
+	msg := fmt.Sprintf("Привет %v! \nДобро пожаловать в наш сервис, наши команды:\n/start - начало\n/categoryCreate - создать категорию для todo\n/list - все категории\n/categoryDelete - удалить категорию\n/todo - создание, просмотр, удаление тудушек", message.Message.From.FirstName)
 	return s.SendMessage(message.Message.From.Id, msg)
 }
 
 func (s *Service) SendDefault(message MessageWrapper) (BotMessage, error) {
-	msg := "Извините, команда не распознана 😞, наши команды:\n/start - начало\n/categoryCreate - создать категорию для todo\n/list - все категории"
+	msg := "Извините, команда не распознана 😞, наши команды:\n/start - начало\n/categoryCreate - создать категорию для todo\n/list - все категории\n/categoryDelete - удалить категорию\n/todo - создание, просмотр, удаление тудушек"
 	return s.SendMessage(message.Message.From.Id, msg)
 }
 
