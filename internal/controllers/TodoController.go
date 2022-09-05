@@ -29,42 +29,72 @@ func (t *TodoController) Create(lastMessage telegram.MessageWrapper, modelFromCa
 	var todo models.Todo
 	var err error
 
-	switch modelFromCallback.Model {
-	case "category":
+	todos, err := todo.GetAllFromCategoryId(t.DB, category.ID)
+
+	if err != nil {
+		return err
+	}
+
+	switch {
+	case modelFromCallback.Model == "category" && lastMessage.CallbackQuery.Id != "":
+		text := fmt.Sprintf("Todo %v категории(нажми чтобы удалить)\n", category.Name)
+
+		if todos == nil {
+			text := "У этой категории нет todo(вводите названия для создания)"
+			_, err = t.TgService.EditMessageText(uint(lastMessage.CallbackQuery.Message.Chat.Id), lastMessage.CallbackQuery.Message.MessageId, text)
+			return err
+		}
+
+		_, err = t.TgService.EditMessageText(uint(lastMessage.CallbackQuery.Message.Chat.Id), lastMessage.CallbackQuery.Message.MessageId, text)
+
+		if err != nil {
+			break
+		}
+
+		_, err = t.TgService.EditMessageReplyMarkup(uint(lastMessage.CallbackQuery.Message.Chat.Id), lastMessage.CallbackQuery.Message.MessageId, todos)
+	case modelFromCallback.Model == "todo" && lastMessage.CallbackQuery.Id != "":
+		err = t.Delete(lastMessage, modelFromCallback)
+	case modelFromCallback.Model == "category" && lastMessage.CallbackQuery.Id == "":
+		todo.Name = lastMessage.Message.Text
+		todo.CategoryID = category.ID
+		err := todo.Create(t.DB)
+
+		if err != nil {
+			break
+		}
+
 		todos, err := todo.GetAllFromCategoryId(t.DB, category.ID)
 
 		if err != nil {
 			break
 		}
 
-		if todos == nil {
-			_, err = t.TgService.SendMessage(uint(lastMessage.CallbackQuery.Chat.Id), fmt.Sprintf("У %v нет todo, используйте /todoCreate", category.Name))
-		} else {
-			text := fmt.Sprintf("Todo %v категории\n", category.Name)
-			_, err = t.TgService.EditMessageText(uint(lastMessage.CallbackQuery.Message.Chat.Id), lastMessage.CallbackQuery.Message.MessageId, text)
+		if len(todos) == 1 {
+			text := fmt.Sprintf("Todo %v категории(нажми чтобы удалить)\n", category.Name)
+			botMsg, err := t.TgService.SendInlineKeyboard(text, lastMessage.Message.From.Id, todos)
 
 			if err != nil {
-				break
+				return err
 			}
 
-			_, err = t.TgService.EditMessageReplyMarkup(uint(lastMessage.CallbackQuery.Message.Chat.Id), lastMessage.CallbackQuery.Message.MessageId, todos)
+			err = SaveBotMsg(botMsg, t.DB)
+			fmt.Println(botMsg)
+			return err
 		}
+
+		var lastMsg models.Message
+		lastMsg.GetLastBot(t.DB, lastMessage.Message.From.Id)
+
+		_, err = t.TgService.EditMessageReplyMarkup(lastMessage.Message.From.Id, int(lastMsg.TgID), todos)
 	default:
-		todo.Name = lastMessage.Message.Text
-		todo.CategoryID = category.ID
-		err := todo.Create(t.DB)
+		botMsg, err := t.TgService.SendDefault(lastMessage)
 
 		if err != nil {
-			return err
+			break
 		}
 
-		todos, err := todo.GetAllFromCategoryId(t.DB, category.ID)
-
-		if err != nil {
-			return err
-		}
-
-		_, err = t.TgService.EditMessageReplyMarkup(uint(lastMessage.CallbackQuery.Message.Chat.Id), lastMessage.CallbackQuery.Message.MessageId, todos)
+		err = SaveBotMsg(botMsg, t.DB)
+		break
 	}
 
 	if err != nil {
@@ -93,6 +123,15 @@ func (t *TodoController) Delete(lastMessage telegram.MessageWrapper, modelFromCa
 
 	if err != nil {
 		return err
+	}
+
+	if todos == nil {
+		_, err = t.TgService.EditMessageText(uint(lastMessage.CallbackQuery.Message.Chat.Id), lastMessage.CallbackQuery.Message.MessageId, "У этой категории больше нет todo")
+
+		if err != nil {
+			return err
+		}
+		return nil
 	}
 
 	_, err = t.TgService.EditMessageReplyMarkup(uint(lastMessage.CallbackQuery.Message.Chat.Id), lastMessage.CallbackQuery.Message.MessageId, todos)

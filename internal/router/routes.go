@@ -70,31 +70,31 @@ func (router *Router) Start(w http.ResponseWriter, r *http.Request) {
 			err = errors.New("command message not found")
 			break
 		}
-		//if lastCommand.Text == "/todo" {
-		//	var callback models.Callback
-		//	callback.GetLast(router.DB, lastMessage.Message.From.Id)
-		//
-		//	if callback.ID == 0 {
-		//		err = errors.New("callback not exists")
-		//		handleError(w, err)
-		//		return
-		//	}
-		//
-		//	var callbackQuery telegram.CallbackQuery
-		//	err = json.Unmarshal([]byte(callback.Json), &callbackQuery)
-		//
-		//	if err != nil {
-		//		handleError(w, err)
-		//		return
-		//	}
-		//
-		//	err = json.Unmarshal([]byte(callbackQuery.Data), &modelFromCallback)
-		//
-		//	if err != nil {
-		//		handleError(w, err)
-		//		return
-		//	}
-		//}
+		if lastCommand.Text == "/todo" {
+			var callback models.Callback
+			callback.GetLast(router.DB, lastMessage.Message.From.Id)
+
+			if callback.ID == 0 {
+				err = errors.New("callback not exists")
+				handleError(w, err)
+				return
+			}
+
+			var callbackQuery telegram.CallbackQuery
+			err = json.Unmarshal([]byte(callback.Json), &callbackQuery)
+
+			if err != nil {
+				handleError(w, err)
+				return
+			}
+
+			err = json.Unmarshal([]byte(callbackQuery.Data), &modelFromCallback)
+
+			if err != nil {
+				handleError(w, err)
+				return
+			}
+		}
 	case lastMessage.CallbackQuery.Id != "":
 		err = lastCommand.GetLastCommand(router.DB, uint(lastMessage.CallbackQuery.Chat.Id))
 		if lastCommand.ID == 0 {

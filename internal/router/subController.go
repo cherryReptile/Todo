@@ -87,11 +87,11 @@ func (router Router) handleLastCommand(lastCommand models.Message, modelFromCall
 	case lastUpdate.Message.Text == "/todo":
 		err = router.CategoryController.List(lastUpdate, "Выберите в какой категории создать todo ✍️\n")
 		break
-	case lastCommand.Text == "/todo" && modelFromCallback.Model == "category":
+	case lastCommand.Text == "/todo" && modelFromCallback.Model == "category" || modelFromCallback.Model == "todo":
 		err = router.TodoController.Create(lastUpdate, modelFromCallback)
 		break
-	case lastCommand.Text == "/todo" && modelFromCallback.Model == "todo":
-		err = router.TodoController.Delete(lastUpdate, modelFromCallback)
+	//case lastCommand.Text == "/todo" && modelFromCallback.Model == "todo":
+	//	err = router.TodoController.Delete(lastUpdate, modelFromCallback)
 	//case lastCommand.Text == "/todoCreate":
 	//	err = router.CategoryController.List(lastUpdate, "Выберите в какой категории создать todo ✍️\n")
 	//case lastCommand.Text == "/todoCreate" && modelFromCallback.Model == "":
