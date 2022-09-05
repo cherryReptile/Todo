@@ -64,8 +64,8 @@ type MessageWrapper struct {
 //Callbacks
 
 type CallbackQuery struct {
-	Id string `json:"id"`
-	From
+	Id           string `json:"id"`
+	From         `json:"from"`
 	Message      `json:"message"`
 	ChatInstance string `json:"chat_instance"`
 	Data         string `json:"data"`
@@ -121,6 +121,13 @@ type ToInlineKeyboardBtn struct {
 	MessageId   int         `json:"message_id"`
 	Text        string      `json:"text"`
 	ReplyMarkup ReplyMarkup `json:"reply_markup"`
+}
+
+//Just id and type model for callback
+
+type ModelFromCallback struct {
+	Id    uint   `json:"id"`
+	Model string `json:"model"`
 }
 
 //For service struct

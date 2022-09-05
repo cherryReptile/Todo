@@ -70,17 +70,12 @@ func (c *CategoryController) List(lastMessage telegram.MessageWrapper, text stri
 	return nil
 }
 
-func (c *CategoryController) Get(lastMessage telegram.MessageWrapper) error {
+func (c *CategoryController) Get(lastMessage telegram.MessageWrapper, modelFromCallback telegram.ModelFromCallback) error {
 	go AnswerToCallback(lastMessage, c.TgService)
 
 	var category models.Category
-	id, err := strconv.Atoi(lastMessage.CallbackQuery.Data)
 
-	if err != nil {
-		return err
-	}
-
-	category.Get(c.DB, uint(id))
+	category.Get(c.DB, modelFromCallback.Id)
 
 	var todo models.Todo
 	todos, err := todo.GetAllFromCategoryId(c.DB, category.ID)

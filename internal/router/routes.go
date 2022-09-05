@@ -1,6 +1,8 @@
 package router
 
 import (
+	"encoding/json"
+	"errors"
 	"github.com/cherryReptile/Todo/internal/controllers"
 	"github.com/cherryReptile/Todo/internal/database"
 	"github.com/cherryReptile/Todo/internal/models"
@@ -59,30 +61,47 @@ func (router *Router) Start(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var lastCommand models.Message
-	var callback models.Callback
-	var penultimateMsg models.Message
+	var modelFromCallback telegram.ModelFromCallback
 
 	switch {
 	case lastMessage.Message.MessageId != 0:
-		err = lastCommand.GetLastCommand(router.DB, lastMessage.Message.From.Id)
-		if err != nil {
+		lastCommand.GetLastCommand(router.DB, lastMessage.Message.From.Id)
+		if lastCommand.ID == 0 {
+			err = errors.New("command message not found")
 			break
 		}
-		err = callback.GetLast(router.DB, lastMessage.Message.From.Id)
-		if err != nil {
-			break
-		}
-		err = penultimateMsg.GetLast(router.DB, lastMessage.Message.From.Id)
+		//if lastCommand.Text == "/todo" {
+		//	var callback models.Callback
+		//	callback.GetLast(router.DB, lastMessage.Message.From.Id)
+		//
+		//	if callback.ID == 0 {
+		//		err = errors.New("callback not exists")
+		//		handleError(w, err)
+		//		return
+		//	}
+		//
+		//	var callbackQuery telegram.CallbackQuery
+		//	err = json.Unmarshal([]byte(callback.Json), &callbackQuery)
+		//
+		//	if err != nil {
+		//		handleError(w, err)
+		//		return
+		//	}
+		//
+		//	err = json.Unmarshal([]byte(callbackQuery.Data), &modelFromCallback)
+		//
+		//	if err != nil {
+		//		handleError(w, err)
+		//		return
+		//	}
+		//}
 	case lastMessage.CallbackQuery.Id != "":
 		err = lastCommand.GetLastCommand(router.DB, uint(lastMessage.CallbackQuery.Chat.Id))
-		if err != nil {
+		if lastCommand.ID == 0 {
+			err = errors.New("command message not found")
 			break
 		}
-		err = callback.GetLast(router.DB, uint(lastMessage.CallbackQuery.Chat.Id))
-		if err != nil {
-			break
-		}
-		err = penultimateMsg.GetLast(router.DB, uint(lastMessage.CallbackQuery.Chat.Id))
+		err = json.Unmarshal([]byte(lastMessage.CallbackQuery.Data), &modelFromCallback)
 	}
 
 	if err != nil {
@@ -90,7 +109,7 @@ func (router *Router) Start(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = router.handleLastCommand(lastCommand, penultimateMsg, callback, lastMessage)
+	err = router.handleLastCommand(lastCommand, modelFromCallback, lastMessage)
 
 	if err != nil {
 		handleError(w, err)

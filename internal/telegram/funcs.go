@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"github.com/cherryReptile/Todo/internal/models"
 	"io"
+	"log"
 	"net/http"
-	"strconv"
 	"time"
 )
 
@@ -220,14 +220,35 @@ func modelSwitcher(inline *ToInlineKeyboardBtn, model interface{}) {
 		inline.ReplyMarkup.InlineKeyboard = make([][1]InlineKeyboardBtn, len(categories))
 
 		for i, v := range categories {
-			inline.ReplyMarkup.InlineKeyboard[i][0].Text, inline.ReplyMarkup.InlineKeyboard[i][0].CallbackData = v.Name, strconv.Itoa(int(v.ID))
+			var category ModelFromCallback
+			category.Id = v.ID
+			category.Model = "category"
+
+			jsonBytes, err := json.Marshal(category)
+
+			if err != nil {
+				log.Fatal(err)
+				return
+			}
+			fmt.Println(string(jsonBytes))
+			inline.ReplyMarkup.InlineKeyboard[i][0].Text, inline.ReplyMarkup.InlineKeyboard[i][0].CallbackData = v.Name, string(jsonBytes)
 		}
 	case []models.Todo:
 		todos := model.([]models.Todo)
 		inline.ReplyMarkup.InlineKeyboard = make([][1]InlineKeyboardBtn, len(todos))
 
 		for i, v := range todos {
-			inline.ReplyMarkup.InlineKeyboard[i][0].Text, inline.ReplyMarkup.InlineKeyboard[i][0].CallbackData = v.Name, strconv.Itoa(int(v.ID))
+			var todo ModelFromCallback
+			todo.Id = v.ID
+			todo.Model = "todo"
+
+			jsonBytes, err := json.Marshal(todo)
+
+			if err != nil {
+				log.Fatal(err)
+				return
+			}
+			inline.ReplyMarkup.InlineKeyboard[i][0].Text, inline.ReplyMarkup.InlineKeyboard[i][0].CallbackData = v.Name, string(jsonBytes)
 		}
 	}
 }
