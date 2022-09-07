@@ -19,6 +19,10 @@ func (router *Router) getLastMsg() (telegram.MessageWrapper, error) {
 		return telegram.MessageWrapper{}, err
 	}
 
+	if len(updates.Result) == 1 {
+		return updates.Result[0], err
+	}
+
 	lastMessage := updates.Result[len(updates.Result)-1]
 	return lastMessage, nil
 }
@@ -39,19 +43,22 @@ func (router Router) saveIncomingMsg(lastMessage telegram.MessageWrapper) error 
 		}
 
 		message.IsBot = lastMessage.Message.From.IsBot
+		message.IsCallback = false
 		err = message.Create(router.DB)
 	case lastMessage.CallbackQuery.Id != "":
-		var callback models.Callback
+		var message models.Message
 		bytes, err := json.Marshal(&lastMessage.CallbackQuery)
 
 		if err != nil {
 			break
 		}
 
-		callback.Json = string(bytes)
-		callback.TgID = uint(lastMessage.CallbackQuery.Message.MessageId)
-		callback.UserId = uint(lastMessage.CallbackQuery.Chat.Id)
-		err = callback.Create(router.DB)
+		message.Text = string(bytes)
+		message.TgID = uint(lastMessage.CallbackQuery.Message.MessageId)
+		message.UserId = uint(lastMessage.CallbackQuery.Chat.Id)
+		message.IsBot = false
+		message.IsCallback = true
+		err = message.Create(router.DB)
 	}
 
 	return err
@@ -63,10 +70,10 @@ func (router Router) handleLastCommand(lastCommand models.Message, modelFromCall
 
 	switch {
 	case lastUpdate.Message.Text == "/start":
-		_, err = router.TgService.SendHello(lastUpdate)
+		botMsg, err = router.TgService.SendHello(lastUpdate)
 		break
 	case lastUpdate.Message.Text == "/categoryCreate":
-		_, err = router.TgService.SendCreate(lastUpdate)
+		botMsg, err = router.TgService.SendCreate(lastUpdate)
 		break
 	case lastCommand.Text == "/categoryCreate" && uint(lastUpdate.Message.MessageId)-lastCommand.TgID == 2:
 		err = router.CategoryController.Create(lastUpdate)
@@ -102,7 +109,10 @@ func (router Router) handleLastCommand(lastCommand models.Message, modelFromCall
 		return err
 	}
 
-	err = controllers.SaveBotMsg(botMsg, router.DB)
+	if botMsg.Result.Text != "" {
+		err = controllers.SaveBotMsg(botMsg, router.DB)
+	}
+
 	if err != nil {
 		return err
 	}
