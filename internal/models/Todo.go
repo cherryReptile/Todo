@@ -24,7 +24,7 @@ func (t *Todo) Create(db *database.SqlLite) error {
 	}
 
 	id, err := result.LastInsertId()
-	t.ID = uint(id)
+	t.Get(db, uint(id))
 	fmt.Println(result)
 	return err
 }

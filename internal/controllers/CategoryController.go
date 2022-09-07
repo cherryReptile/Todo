@@ -5,7 +5,6 @@ import (
 	"github.com/cherryReptile/Todo/internal/database"
 	"github.com/cherryReptile/Todo/internal/models"
 	"github.com/cherryReptile/Todo/internal/telegram"
-	"strconv"
 )
 
 type CategoryController struct {
@@ -44,7 +43,7 @@ func (c *CategoryController) Create(lastMessage telegram.MessageWrapper) error {
 	return err
 }
 
-func (c *CategoryController) List(lastMessage telegram.MessageWrapper, text string) error {
+func (c *CategoryController) List(lastMessage telegram.MessageWrapper, text string, btnMethod string) error {
 	var user models.User
 	user.GetFromTg(c.DB, lastMessage.Message.From.Id)
 
@@ -60,7 +59,7 @@ func (c *CategoryController) List(lastMessage telegram.MessageWrapper, text stri
 	if categories == nil {
 		botMsg, err = c.TgService.SendMessage(lastMessage.Message.From.Id, "У вас ещё нет категорий, используйте 👉 /categoryCreate")
 	} else {
-		botMsg, err = c.TgService.SendInlineKeyboard(text, lastMessage.Message.From.Id, categories)
+		botMsg, err = c.TgService.SendInlineKeyboard(text, lastMessage.Message.From.Id, btnMethod, categories)
 	}
 
 	if err != nil {
@@ -89,9 +88,10 @@ func (c *CategoryController) Get(lastMessage telegram.MessageWrapper, modelFromC
 	var botMsg telegram.BotMessage
 
 	if todos == nil {
-		botMsg, err = c.TgService.SendMessage(uint(lastMessage.CallbackQuery.Chat.Id), fmt.Sprintf("У %v нет todo, используйте /todo, чтобы создать", category.Name))
+		botMsg, err = c.TgService.EditMessageText(uint(lastMessage.CallbackQuery.Chat.Id), lastMessage.CallbackQuery.Message.MessageId, fmt.Sprintf("У %v нет todo, используйте /todoCreate, чтобы создать", category.Name))
 	} else {
-		botMsg, err = c.TgService.SendInlineKeyboard(fmt.Sprintf("Todo %v категории(нажми, чтобы удалить):", category.Name), uint(lastMessage.CallbackQuery.Chat.Id), todos)
+		botMsg, err = c.TgService.EditMessageText(uint(lastMessage.CallbackQuery.Chat.Id), lastMessage.CallbackQuery.Message.MessageId, fmt.Sprintf("Todo %v категории(нажми, чтобы удалить):", category.Name))
+		botMsg, err = c.TgService.EditMessageReplyMarkup(lastMessage.CallbackQuery.From.Id, lastMessage.CallbackQuery.Message.MessageId, "todoDelete", todos)
 	}
 
 	if err != nil {
@@ -107,19 +107,13 @@ func (c *CategoryController) Get(lastMessage telegram.MessageWrapper, modelFromC
 	return nil
 }
 
-func (c *CategoryController) Delete(lastMessage telegram.MessageWrapper) error {
+func (c *CategoryController) Delete(lastMessage telegram.MessageWrapper, modelFromCallback telegram.ModelFromCallback) error {
 	go AnswerToCallback(lastMessage, c.TgService)
 	var user models.User
 	user.GetFromTg(c.DB, uint(lastMessage.CallbackQuery.Message.Chat.Id))
 
 	var category models.Category
-	id, err := strconv.Atoi(lastMessage.CallbackQuery.Data)
-
-	if err != nil {
-		return err
-	}
-
-	category.Delete(c.DB, uint(id))
+	category.Delete(c.DB, modelFromCallback.Id)
 
 	categories, err := category.GetAllCategories(c.DB, user.ID)
 
@@ -127,7 +121,7 @@ func (c *CategoryController) Delete(lastMessage telegram.MessageWrapper) error {
 		return err
 	}
 
-	_, err = c.TgService.EditMessageReplyMarkup(uint(lastMessage.CallbackQuery.Message.Chat.Id), lastMessage.CallbackQuery.Message.MessageId, categories)
+	_, err = c.TgService.EditMessageReplyMarkup(uint(lastMessage.CallbackQuery.Message.Chat.Id), lastMessage.CallbackQuery.Message.MessageId, "categoryDelete", categories)
 
 	if err != nil {
 		return err

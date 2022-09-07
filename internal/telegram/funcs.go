@@ -108,13 +108,13 @@ func (s *Service) AnswerCallbackQuery(callbackId string, text string) error {
 
 // List as inline keyboard buttons
 
-func (s *Service) SendInlineKeyboard(text string, chatId uint, model interface{}) (BotMessage, error) {
+func (s *Service) SendInlineKeyboard(text string, chatId uint, btnMethod string, model interface{}) (BotMessage, error) {
 	var responseMsg BotMessage
 
 	var inline ToInlineKeyboardBtn
 	inline.Text, inline.ChatId = text, chatId
 
-	modelSwitcher(&inline, model)
+	modelSwitcher(&inline, btnMethod, model)
 
 	res, err := s.DoRequest("sendMessage", "POST", inline)
 
@@ -138,12 +138,12 @@ func (s *Service) SendInlineKeyboard(text string, chatId uint, model interface{}
 	return responseMsg, nil
 }
 
-func (s *Service) EditMessageReplyMarkup(chatId uint, messageId int, model interface{}) (BotMessage, error) {
+func (s *Service) EditMessageReplyMarkup(chatId uint, messageId int, btnMethod string, model interface{}) (BotMessage, error) {
 	var responseMsg BotMessage
 	var inline ToInlineKeyboardBtn
 	inline.ChatId, inline.MessageId = chatId, messageId
 
-	modelSwitcher(&inline, model)
+	modelSwitcher(&inline, btnMethod, model)
 
 	res, err := s.DoRequest("editMessageReplyMarkup", "POST", inline)
 
@@ -213,7 +213,7 @@ func (s *Service) BeforeRequest(tgMethod string, httpMethod string, paramStruct 
 
 // Abstract for doing requests methods
 
-func modelSwitcher(inline *ToInlineKeyboardBtn, model interface{}) {
+func modelSwitcher(inline *ToInlineKeyboardBtn, method string, model interface{}) {
 	switch model.(type) {
 	case []models.Category:
 		categories := model.([]models.Category)
@@ -223,6 +223,7 @@ func modelSwitcher(inline *ToInlineKeyboardBtn, model interface{}) {
 			var category ModelFromCallback
 			category.Id = v.ID
 			category.Model = "category"
+			category.Method = method
 
 			jsonBytes, err := json.Marshal(category)
 
@@ -241,6 +242,7 @@ func modelSwitcher(inline *ToInlineKeyboardBtn, model interface{}) {
 			var todo ModelFromCallback
 			todo.Id = v.ID
 			todo.Model = "todo"
+			todo.Method = method
 
 			jsonBytes, err := json.Marshal(todo)
 
