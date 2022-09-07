@@ -126,8 +126,9 @@ type ToInlineKeyboardBtn struct {
 //Just id and type model for callback
 
 type ModelFromCallback struct {
-	Id    uint   `json:"id"`
-	Model string `json:"model"`
+	Id     uint   `json:"id"`
+	Model  string `json:"model"`
+	Method string `json:"method"`
 }
 
 //For service struct

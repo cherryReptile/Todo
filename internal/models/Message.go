@@ -7,19 +7,20 @@ import (
 )
 
 type Message struct {
-	ID        uint           `json:"id" db:"id"`
-	Text      string         `json:"text" db:"text"`
-	TgID      uint           `json:"tg_id" db:"tg_id"`
-	UserId    uint           `json:"user_id" db:"user_id"`
-	IsBot     bool           `json:"is_bot" db:"is_bot"`
-	Command   sql.NullString `json:"command" db:"command"`
-	CreatedAt sql.NullTime   `json:"created_at" db:"created_at"`
-	UpdatedAt sql.NullTime   `json:"updated_at" db:"updated_at"`
+	ID         uint           `json:"id" db:"id"`
+	Text       string         `json:"text" db:"text"`
+	TgID       uint           `json:"tg_id" db:"tg_id"`
+	UserId     uint           `json:"user_id" db:"user_id"`
+	IsBot      bool           `json:"is_bot" db:"is_bot"`
+	IsCallback bool           `json:"is_callback" db:"is_callback"`
+	Command    sql.NullString `json:"command" db:"command"`
+	CreatedAt  sql.NullTime   `json:"created_at" db:"created_at"`
+	UpdatedAt  sql.NullTime   `json:"updated_at" db:"updated_at"`
 }
 
 func (m *Message) Create(db *database.SqlLite) error {
 	m.CreatedAt = sql.NullTime{Time: time.Now(), Valid: true}
-	result, err := db.DB.NamedExec("INSERT INTO messages (text, tg_id, user_id, is_bot, command, created_at) VALUES (:text, :tg_id, :user_id, :is_bot,:command, :created_at)", m)
+	result, err := db.DB.NamedExec("INSERT INTO messages (text, tg_id, user_id, is_bot, is_callback, command, created_at) VALUES (:text, :tg_id, :user_id, :is_bot, :is_callback,:command, :created_at)", m)
 
 	if err != nil {
 		return err
@@ -64,6 +65,12 @@ func (m *Message) GetLast(db *database.SqlLite, userId uint) error {
 
 func (m *Message) GetLastBot(db *database.SqlLite, userId uint) error {
 	err := db.DB.Get(m, "SELECT * FROM messages WHERE user_id=? AND is_bot=true ORDER BY id DESC LIMIT 1", userId)
+
+	return err
+}
+
+func (m *Message) GetLastCallback(db *database.SqlLite, userId uint) error {
+	err := db.DB.Get(m, "SELECT * FROM messages WHERE user_id=? AND is_callback=true ORDER BY id DESC LIMIT 1", userId)
 
 	return err
 }

@@ -19,6 +19,10 @@ func (router *Router) getLastMsg() (telegram.MessageWrapper, error) {
 		return telegram.MessageWrapper{}, err
 	}
 
+	if len(updates.Result) == 1 {
+		return updates.Result[0], err
+	}
+
 	lastMessage := updates.Result[len(updates.Result)-1]
 	return lastMessage, nil
 }
@@ -39,19 +43,22 @@ func (router Router) saveIncomingMsg(lastMessage telegram.MessageWrapper) error 
 		}
 
 		message.IsBot = lastMessage.Message.From.IsBot
+		message.IsCallback = false
 		err = message.Create(router.DB)
 	case lastMessage.CallbackQuery.Id != "":
-		var callback models.Callback
+		var message models.Message
 		bytes, err := json.Marshal(&lastMessage.CallbackQuery)
 
 		if err != nil {
 			break
 		}
 
-		callback.Json = string(bytes)
-		callback.TgID = uint(lastMessage.CallbackQuery.Message.MessageId)
-		callback.UserId = uint(lastMessage.CallbackQuery.Chat.Id)
-		err = callback.Create(router.DB)
+		message.Text = string(bytes)
+		message.TgID = uint(lastMessage.CallbackQuery.Message.MessageId)
+		message.UserId = uint(lastMessage.CallbackQuery.Chat.Id)
+		message.IsBot = false
+		message.IsCallback = true
+		err = message.Create(router.DB)
 	}
 
 	return err
@@ -63,36 +70,47 @@ func (router Router) handleLastCommand(lastCommand models.Message, modelFromCall
 
 	switch {
 	case lastUpdate.Message.Text == "/start":
-		_, err = router.TgService.SendHello(lastUpdate)
+		botMsg, err = router.TgService.SendHello(lastUpdate)
 		break
 	case lastUpdate.Message.Text == "/categoryCreate":
-		_, err = router.TgService.SendCreate(lastUpdate)
+		botMsg, err = router.TgService.SendCreate(lastUpdate)
 		break
 	case lastCommand.Text == "/categoryCreate" && uint(lastUpdate.Message.MessageId)-lastCommand.TgID == 2:
 		err = router.CategoryController.Create(lastUpdate)
 		break
 	case lastUpdate.Message.Text == "/list":
-		err = router.CategoryController.List(lastUpdate, "Твои категории(нажми чтобы увидеть todo): 👇\n")
+		err = router.CategoryController.List(lastUpdate, "Твои категории(нажми чтобы увидеть todo): 👇\n", "list")
 		break
-	case lastCommand.Text == "/list" && modelFromCallback.Model == "category":
+	case lastCommand.Text == "/list" && lastUpdate.CallbackQuery.Id != "" && modelFromCallback.Method == "list":
 		err = router.CategoryController.Get(lastUpdate, modelFromCallback)
 		break
-	case lastCommand.Text == "/list" && modelFromCallback.Model == "todo":
+	case lastCommand.Text == "/list" && lastUpdate.CallbackQuery.Id != "" && modelFromCallback.Method == "delete":
 		err = router.TodoController.Delete(lastUpdate, modelFromCallback)
+		break
 	case lastUpdate.Message.Text == "/categoryDelete":
-		err = router.CategoryController.List(lastUpdate, "Выберите какую категорию удалить 🗑:\n")
+		err = router.CategoryController.List(lastUpdate, "Выберите какую категорию удалить 🗑:\n", "categoryDelete")
 		break
-	case lastCommand.Text == "/categoryDelete" && lastUpdate.CallbackQuery.Id != "":
-		err = router.CategoryController.Delete(lastUpdate)
+	case lastCommand.Text == "/categoryDelete" && lastUpdate.CallbackQuery.Id != "" && modelFromCallback.Method == "categoryDelete":
+		err = router.CategoryController.Delete(lastUpdate, modelFromCallback)
 		break
-	case lastUpdate.Message.Text == "/todo":
-		err = router.CategoryController.List(lastUpdate, "Выберите в какой категории создать todo ✍️\n")
+	case lastUpdate.Message.Text == "/todoCreate":
+		err = router.CategoryController.List(lastUpdate, "Выберите в какой категории создать todo ✍️\n", "todoCreate")
 		break
-	case lastCommand.Text == "/todo" && lastUpdate.CallbackQuery.Id != "":
+	case lastCommand.Text == "/todoCreate" && lastUpdate.CallbackQuery.Id != "" && modelFromCallback.Method == "todoCreate":
+		botMsg, err = router.TgService.EditMessageText(lastUpdate.CallbackQuery.From.Id, lastUpdate.CallbackQuery.Message.MessageId, "Введите название todo")
+		break
+	case lastCommand.Text == "/todoCreate" && lastUpdate.CallbackQuery.Id == "" && modelFromCallback.Method == "todoCreate":
 		err = router.TodoController.Create(lastUpdate, modelFromCallback)
 		break
-	case lastCommand.Text == "/todo" && lastUpdate.CallbackQuery.Id == "":
-		err = router.TodoController.DefaultCreate(lastUpdate, modelFromCallback)
+	case lastUpdate.Message.Text == "/todoDelete":
+		err = router.CategoryController.List(lastUpdate, "Выберите в какой категории удалить todo ✍️\n", "todoList")
+		break
+	case lastCommand.Text == "/todoDelete" && lastUpdate.CallbackQuery.Id != "" && modelFromCallback.Method == "todoList":
+		err = router.CategoryController.Get(lastUpdate, modelFromCallback)
+		break
+	case lastCommand.Text == "/todoDelete" && lastUpdate.CallbackQuery.Id != "" && modelFromCallback.Method == "todoDelete":
+		err = router.TodoController.Delete(lastUpdate, modelFromCallback)
+		break
 	default:
 		botMsg, err = router.TgService.SendDefault(lastUpdate)
 		break
@@ -102,7 +120,10 @@ func (router Router) handleLastCommand(lastCommand models.Message, modelFromCall
 		return err
 	}
 
-	err = controllers.SaveBotMsg(botMsg, router.DB)
+	if botMsg.Result.Text != "" {
+		err = controllers.SaveBotMsg(botMsg, router.DB)
+	}
+
 	if err != nil {
 		return err
 	}

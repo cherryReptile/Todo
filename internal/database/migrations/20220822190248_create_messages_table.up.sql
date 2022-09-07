@@ -5,6 +5,7 @@ CREATE TABLE messages
     tg_id      integer not null,
     user_id    integer not null,
     is_bot     boolean not null,
+    is_callback boolean not null,
     command    text,
     created_at datetime,
     updated_at datetime,
