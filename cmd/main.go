@@ -23,13 +23,7 @@ func main() {
 	r := mux.NewRouter()
 	s := r.Host("127.0.0.1:3000").Subrouter()
 
-	//s.HandleFunc("/", route.Index).Methods("GET")
-	s.HandleFunc("/start", route.Start)
-	//s.HandleFunc("/categoryCreate", route.CategoryCreate)
-	//s.HandleFunc("/categoryList", route.CategoryList)
-	//s.HandleFunc("/categoryGet", route.CategoryGet)
-	//s.HandleFunc("/categoryDelete", route.CategoryDelete)
-	//s.HandleFunc("/callback", route.AnswerToCallback)
+	s.HandleFunc("/start", route.Start).Methods("POST")
 
 	err := http.ListenAndServe(":3000", r)
 	if err != nil {
