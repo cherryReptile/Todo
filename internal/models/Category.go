@@ -30,20 +30,20 @@ func (c *Category) Create(db *database.SqlLite) error {
 }
 
 func (c *Category) Get(db *database.SqlLite, id uint) error {
-	err := db.DB.Get(c, "SELECT * FROM categories WHERE id=?", id)
+	err := db.DB.Get(c, "SELECT * FROM categories WHERE id=$1", id)
 
 	return err
 }
 
 func (c *Category) GetAllCategories(db *database.SqlLite, userId uint) ([]Category, error) {
 	var mm []Category
-	err := db.DB.Select(&mm, "SELECT * FROM categories WHERE user_id=? ORDER BY id", userId)
+	err := db.DB.Select(&mm, "SELECT * FROM categories WHERE user_id=$1 ORDER BY id", userId)
 
 	return mm, err
 }
 
 func (c *Category) Update(db *database.SqlLite, id uint) error {
-	result, err := db.DB.Exec("UPDATE categories SET name=? WHERE id=?", c.Name, id)
+	result, err := db.DB.Exec("UPDATE categories SET name=$1 WHERE id=$2", c.Name, id)
 	fmt.Println(result)
 
 	if err != nil {
@@ -56,7 +56,7 @@ func (c *Category) Update(db *database.SqlLite, id uint) error {
 }
 
 func (c *Category) Delete(db *database.SqlLite, id uint) error {
-	result, err := db.DB.Exec("DELETE FROM categories WHERE id=?", id)
+	result, err := db.DB.Exec("DELETE FROM categories WHERE id=$1", id)
 	fmt.Println(result)
 
 	return err

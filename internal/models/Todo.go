@@ -30,7 +30,7 @@ func (t *Todo) Create(db *database.SqlLite) error {
 }
 
 func (t *Todo) Get(db *database.SqlLite, id uint) error {
-	err := db.DB.Get(t, "SELECT * FROM todos WHERE id=?", id)
+	err := db.DB.Get(t, "SELECT * FROM todos WHERE id=$1", id)
 
 	return err
 }
@@ -38,14 +38,14 @@ func (t *Todo) Get(db *database.SqlLite, id uint) error {
 func (t Todo) GetAllFromCategoryId(db *database.SqlLite, categoryId uint) ([]Todo, error) {
 	var tt []Todo
 
-	err := db.DB.Select(&tt, "SELECT * FROM todos WHERE category_id=? ORDER BY id", categoryId)
+	err := db.DB.Select(&tt, "SELECT * FROM todos WHERE category_id=$1 ORDER BY id", categoryId)
 
 	return tt, err
 }
 
 func (t *Todo) Update(db *database.SqlLite, id uint) error {
 	name := t.Name
-	result, err := db.DB.Exec("UPDATE todos SET name=? WHERE id=?", name, id)
+	result, err := db.DB.Exec("UPDATE todos SET name=$1 WHERE id=$2", name, id)
 	fmt.Println(result)
 
 	if err != nil {
@@ -58,7 +58,7 @@ func (t *Todo) Update(db *database.SqlLite, id uint) error {
 }
 
 func (t *Todo) Delete(db *database.SqlLite, id uint) error {
-	result, err := db.DB.Exec("DELETE FROM todos WHERE id=?", id)
+	result, err := db.DB.Exec("DELETE FROM todos WHERE id=$1", id)
 	fmt.Println(result)
 
 	return err

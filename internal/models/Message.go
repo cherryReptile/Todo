@@ -33,7 +33,7 @@ func (m *Message) Create(db *database.SqlLite) error {
 }
 
 func (m *Message) Get(db *database.SqlLite, id uint) error {
-	err := db.DB.Get(m, "SELECT * FROM messages WHERE id=? LIMIT 1", id)
+	err := db.DB.Get(m, "SELECT * FROM messages WHERE id=$1 LIMIT 1", id)
 
 	return err
 }
@@ -58,19 +58,19 @@ func (m *Message) GetLastTwo(db *database.SqlLite, userId uint) ([]Message, erro
 }
 
 func (m *Message) GetLast(db *database.SqlLite, userId uint) error {
-	err := db.DB.Get(m, "SELECT * FROM messages WHERE user_id=? ORDER BY id DESC LIMIT 1", userId)
+	err := db.DB.Get(m, "SELECT * FROM messages WHERE user_id=$1 ORDER BY id DESC LIMIT 1", userId)
 
 	return err
 }
 
 func (m *Message) GetLastBot(db *database.SqlLite, userId uint) error {
-	err := db.DB.Get(m, "SELECT * FROM messages WHERE user_id=? AND is_bot=true ORDER BY id DESC LIMIT 1", userId)
+	err := db.DB.Get(m, "SELECT * FROM messages WHERE user_id=$1 AND is_bot=true ORDER BY id DESC LIMIT 1", userId)
 
 	return err
 }
 
 func (m *Message) GetLastCallback(db *database.SqlLite, userId uint) error {
-	err := db.DB.Get(m, "SELECT * FROM messages WHERE user_id=? AND is_callback=true ORDER BY id DESC LIMIT 1", userId)
+	err := db.DB.Get(m, "SELECT * FROM messages WHERE user_id=$1 AND is_callback=true ORDER BY id DESC LIMIT 1", userId)
 
 	return err
 }
