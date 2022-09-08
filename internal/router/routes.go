@@ -1,8 +1,6 @@
 package router
 
 import (
-	"encoding/json"
-	"errors"
 	"github.com/cherryReptile/Todo/internal/controllers"
 	"github.com/cherryReptile/Todo/internal/database"
 	"github.com/cherryReptile/Todo/internal/models"
@@ -60,51 +58,8 @@ func (router *Router) Start(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var lastCommand models.Message
 	var modelFromCallback telegram.ModelFromCallback
-	var callbackQuery telegram.CallbackQuery
-
-	switch {
-	case lastMessage.Message.MessageId != 0:
-		lastCommand.GetLastCommand(router.DB, lastMessage.Message.From.Id)
-		if lastCommand.ID == 0 {
-			err = errors.New("command message not found")
-			break
-		}
-		//if lastCommand.Text == "/todo" {
-		var callback models.Message
-		callback.GetLastCallback(router.DB, lastMessage.Message.From.Id)
-
-		if callback.ID == 0 {
-			err = errors.New("callback not exists")
-			handleError(w, err)
-			return
-		}
-
-		err = json.Unmarshal([]byte(callback.Text), &callbackQuery)
-
-		if err != nil {
-			handleError(w, err)
-			return
-		}
-
-		err = json.Unmarshal([]byte(callbackQuery.Data), &modelFromCallback)
-
-		if err != nil {
-			handleError(w, err)
-			return
-		}
-		//}
-	case lastMessage.CallbackQuery.Id != "":
-		lastCommand.GetLastCommand(router.DB, uint(lastMessage.CallbackQuery.Chat.Id))
-		if lastCommand.ID == 0 {
-			err = errors.New("command message not found")
-			break
-		}
-		//if lastCommand.Text == "/todo" {
-		err = json.Unmarshal([]byte(lastMessage.CallbackQuery.Data), &modelFromCallback)
-		//}
-	}
+	lastCommand, err := router.toCallback(lastMessage, &modelFromCallback)
 
 	if err != nil {
 		handleError(w, err)

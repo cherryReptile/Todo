@@ -9,15 +9,15 @@ import (
 )
 
 type TodoController struct {
-	DB        *database.SqlLite
-	TgService *telegram.Service
+	DbController
+	TgController
 }
 
 func NewTodoController(db *database.SqlLite, service *telegram.Service) *TodoController {
-	return &TodoController{
-		DB:        db,
-		TgService: service,
-	}
+	t := new(TodoController)
+	t.DB = db
+	t.TgService = service
+	return t
 }
 
 func (t *TodoController) Create(lastMessage telegram.MessageWrapper, modelFromCallback telegram.ModelFromCallback) error {
@@ -83,7 +83,7 @@ func (t *TodoController) Delete(lastMessage telegram.MessageWrapper, modelFromCa
 		return nil
 	}
 
-	_, err = t.TgService.EditMessageReplyMarkup(uint(lastMessage.CallbackQuery.From.Id), lastMessage.CallbackQuery.Message.MessageId, "todoDelete", todos)
+	_, err = t.TgService.EditMessageReplyMarkup(lastMessage.CallbackQuery.From.Id, lastMessage.CallbackQuery.Message.MessageId, "todoDelete", todos)
 
 	return err
 }

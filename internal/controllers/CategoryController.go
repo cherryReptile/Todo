@@ -13,11 +13,12 @@ type CategoryController struct {
 }
 
 func NewCategoryController(db *database.SqlLite, service *telegram.Service) *CategoryController {
-	return &CategoryController{
-		DB:        db,
-		TgService: service,
-	}
+	c := new(CategoryController)
+	c.DB = db
+	c.TgService = service
+	return c
 }
+
 func (c *CategoryController) Create(lastMessage telegram.MessageWrapper) error {
 	var user models.User
 	user.GetFromTg(c.DB, lastMessage.Message.From.Id)

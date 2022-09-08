@@ -2,6 +2,7 @@ package router
 
 import (
 	"encoding/json"
+	"errors"
 	"github.com/cherryReptile/Todo/internal/controllers"
 	"github.com/cherryReptile/Todo/internal/models"
 	"github.com/cherryReptile/Todo/internal/telegram"
@@ -27,7 +28,7 @@ func (router *Router) getLastMsg() (telegram.MessageWrapper, error) {
 	return lastMessage, nil
 }
 
-func (router Router) saveIncomingMsg(lastMessage telegram.MessageWrapper) error {
+func (router *Router) saveIncomingMsg(lastMessage telegram.MessageWrapper) error {
 	var err error
 
 	switch {
@@ -64,7 +65,7 @@ func (router Router) saveIncomingMsg(lastMessage telegram.MessageWrapper) error 
 	return err
 }
 
-func (router Router) handleLastCommand(lastCommand models.Message, modelFromCallback telegram.ModelFromCallback, lastUpdate telegram.MessageWrapper) error {
+func (router *Router) handleLastCommand(lastCommand models.Message, modelFromCallback telegram.ModelFromCallback, lastUpdate telegram.MessageWrapper) error {
 	var err error
 	var botMsg telegram.BotMessage
 
@@ -84,7 +85,7 @@ func (router Router) handleLastCommand(lastCommand models.Message, modelFromCall
 	case lastCommand.Text == "/list" && lastUpdate.CallbackQuery.Id != "" && modelFromCallback.Method == "list":
 		err = router.CategoryController.Get(lastUpdate, modelFromCallback)
 		break
-	case lastCommand.Text == "/list" && lastUpdate.CallbackQuery.Id != "" && modelFromCallback.Method == "delete":
+	case lastCommand.Text == "/list" && lastUpdate.CallbackQuery.Id != "" && modelFromCallback.Method == "todoDelete":
 		err = router.TodoController.Delete(lastUpdate, modelFromCallback)
 		break
 	case lastUpdate.Message.Text == "/categoryDelete":
@@ -124,9 +125,48 @@ func (router Router) handleLastCommand(lastCommand models.Message, modelFromCall
 		err = controllers.SaveBotMsg(botMsg, router.DB)
 	}
 
-	if err != nil {
-		return err
+	return err
+}
+
+func (router *Router) toCallback(lastUpdate telegram.MessageWrapper, modelFromCallback *telegram.ModelFromCallback) (models.Message, error) {
+	var lastCommand models.Message
+	var err error
+
+	switch {
+	case lastUpdate.Message.MessageId != 0:
+		lastCommand.GetLastCommand(router.DB, lastUpdate.Message.From.Id)
+
+		if lastCommand.ID == 0 {
+			err = errors.New("command message not found")
+			break
+		}
+
+		var callback models.Message
+		callback.GetLastCallback(router.DB, lastUpdate.Message.From.Id)
+
+		if callback.ID == 0 {
+			err = errors.New("callback not exists")
+			return lastCommand, err
+		}
+
+		var callbackQuery telegram.CallbackQuery
+		err = json.Unmarshal([]byte(callback.Text), &callbackQuery)
+
+		if err != nil {
+			return lastCommand, err
+		}
+
+		err = json.Unmarshal([]byte(callbackQuery.Data), &modelFromCallback)
+	case lastUpdate.CallbackQuery.Id != "":
+		lastCommand.GetLastCommand(router.DB, uint(lastUpdate.CallbackQuery.Chat.Id))
+
+		if lastCommand.ID == 0 {
+			err = errors.New("command message not found")
+			break
+		}
+
+		err = json.Unmarshal([]byte(lastUpdate.CallbackQuery.Data), &modelFromCallback)
 	}
 
-	return nil
+	return lastCommand, err
 }
