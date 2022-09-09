@@ -17,8 +17,8 @@ type Router struct {
 	TodoController     *controllers.TodoController
 }
 
-func NewRouter(Worker *queue.JobWorker, db *database.SqlLite, service *telegram.Service) Router {
-	return Router{
+func NewRouter(Worker *queue.JobWorker, db *database.SqlLite, service *telegram.Service) *Router {
+	return &Router{
 		Worker:             Worker,
 		DB:                 db,
 		TgService:          service,

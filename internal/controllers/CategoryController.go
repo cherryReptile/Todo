@@ -122,7 +122,11 @@ func (c *CategoryController) Delete(lastMessage telegram.MessageWrapper, modelFr
 		return err
 	}
 
-	_, err = c.TgService.EditMessageReplyMarkup(uint(lastMessage.CallbackQuery.Message.Chat.Id), lastMessage.CallbackQuery.Message.MessageId, "categoryDelete", categories)
+	if categories == nil {
+		_, err = c.TgService.EditMessageText(lastMessage.CallbackQuery.From.Id, lastMessage.CallbackQuery.Message.MessageId, "У вас больше нет категорий")
+	} else {
+		_, err = c.TgService.EditMessageReplyMarkup(uint(lastMessage.CallbackQuery.Message.Chat.Id), lastMessage.CallbackQuery.Message.MessageId, "categoryDelete", categories)
+	}
 
 	if err != nil {
 		return err

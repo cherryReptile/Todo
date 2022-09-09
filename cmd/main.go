@@ -1,33 +1,24 @@
 package main
 
 import (
-	"fmt"
-	"github.com/cherryReptile/Todo/internal/database"
-	"github.com/cherryReptile/Todo/internal/queue"
-	"github.com/cherryReptile/Todo/internal/router"
-	"github.com/cherryReptile/Todo/internal/telegram"
-	"github.com/gorilla/mux"
-	"github.com/joho/godotenv"
+	"github.com/cherryReptile/Todo/internal/base"
 	"log"
-	"net/http"
+	"os"
 )
 
 func main() {
-	godotenv.Load(".env")
-	q := queue.Run()
-	sql := database.Connect()
-	defer sql.DB.Close()
-	tgs := new(telegram.Service)
-	tgs.Init(&sql)
-	route := router.NewRouter(&q, &sql, tgs)
-	r := mux.NewRouter()
-	s := r.Host("127.0.0.1:3000").Subrouter()
+	errChan := make(chan error, 1)
 
-	s.HandleFunc("/start", route.Start).Methods("POST")
+	app := new(base.App)
+	app.Init()
+	app.POST("/", app.RouterController.Start)
 
-	err := http.ListenAndServe(":3000", r)
+	go app.ApiRun("3000", errChan)
+
+	err := <-errChan
 	if err != nil {
-		log.Fatalln(fmt.Sprintf("Error start server: %s", err.Error()))
-		return
+		app.Close()
+		log.Printf("[FATAL] %v", err)
+		os.Exit(1)
 	}
 }
