@@ -67,3 +67,7 @@ func (a *App) Close() {
 func (a *App) POST(path string, method func(w http.ResponseWriter, r *http.Request)) {
 	a.MuxRouter.HandleFunc(path, method).Methods("POST")
 }
+
+func (a *App) GET(path string, method func(w http.ResponseWriter, r *http.Request)) {
+	a.MuxRouter.HandleFunc(path, method).Methods("GET")
+}

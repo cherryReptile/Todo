@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/cherryReptile/Todo/internal/models"
-	"io"
 	"log"
 	"net/http"
 	"time"
@@ -278,13 +277,7 @@ func (s *Service) DoRequest(tgMethod string, httpMethod string, paramStruct inte
 //\Here must be a reference to struct for response
 
 func (s *Service) AfterRequest(res *http.Response, responseMsg interface{}) error {
-	body, err := io.ReadAll(res.Body)
-
-	if err != nil {
-		return err
-	}
-
-	err = json.Unmarshal(body, responseMsg)
+	err := json.NewDecoder(res.Body).Decode(responseMsg)
 
 	return err
 }
