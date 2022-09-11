@@ -1,0 +1,15 @@
+version: '3'
+
+services:
+    app:
+        image: cherryreptile/go:latest
+        user: ${MY_UID}:${MY_GID}
+        environment:
+          - GOCACHE=/usr/src/app/tmp/cache
+        volumes:
+          - .:/usr/src/app
+          - /etc/passwd:/etc/passwd
+          - /etc/shadow:/etc/shadow
+        ports:
+          - "3010:3000"
+        command: ["./bin/{{BASE_NAME}}"]

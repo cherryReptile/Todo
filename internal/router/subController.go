@@ -144,10 +144,10 @@ func (router *Router) toCallback(lastUpdate telegram.MessageWrapper, modelFromCa
 		var callback models.Message
 		callback.GetLastCallback(router.DB, lastUpdate.Message.From.Id)
 
-		if callback.ID == 0 {
-			err = errors.New("callback not exists")
-			return lastCommand, err
-		}
+		//if callback.ID == 0 {
+		//	err = errors.New("callback not exists")
+		//	return lastCommand, err
+		//}
 
 		var callbackQuery telegram.CallbackQuery
 		err = json.Unmarshal([]byte(callback.Text), &callbackQuery)

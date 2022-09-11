@@ -8,8 +8,8 @@ import (
 )
 
 type CategoryController struct {
-	DB        *database.SqlLite
-	TgService *telegram.Service
+	DbController
+	TgController
 }
 
 func NewCategoryController(db *database.SqlLite, service *telegram.Service) *CategoryController {

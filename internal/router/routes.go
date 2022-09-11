@@ -72,4 +72,8 @@ func (router *Router) Start(w http.ResponseWriter, r *http.Request) {
 		handleError(w, err)
 		return
 	}
+
+	responseJson(w, map[string]string{
+		"status": "ok",
+	})
 }

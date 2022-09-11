@@ -1,6 +1,14 @@
 include ${PWD}/.env
 export
 
+USER:=$(shell echo $USER)
+GROUP:=$(shell id -g)
+
+build.app:
+	docker compose run --rm app sh -c "go build -o bin/todo_bot cmd/main.go"
+deploy.server:
+	make build.app
+	ansible-playbook -i deploy/hosts.yml deploy/server.yml -t deploy -e @deploy/vars/prod.yml -e "USER=$(USER)" -e "GROUP=$(GROUP)" --ask-vault-pass
 up:
 	docker-compose up -d && make log
 down:

@@ -1,0 +1,62 @@
+#- name: Create app directory
+#  file:
+#    path: '{{ BASE_PATH }}{{ item }}'
+#    state: directory
+#    recurse: yes
+#    mode: 'a+x'
+#  with_items:
+#    - bin
+#  tags: deploy
+
+- name: Check database exists
+  stat:
+    path: "{{ BASE_PATH }}tmp/db.db"
+  register: exists_result
+  tags: deploy
+
+- name: Create docker compose file
+  template:
+    src: docker-compose.yml.j2
+    dest: '{{ BASE_PATH }}docker-compose.yml'
+  tags: deploy
+
+- name: Create .env file
+  template:
+    src: .env.j2
+    dest: '{{ BASE_PATH }}.env'
+  tags: deploy
+
+- name: Copy bin file
+  copy:
+    src: '{{ playbook_dir }}/../bin/{{ BASE_NAME }}'
+    dest: '{{ BASE_PATH }}bin/'
+    mode: 'a+x'
+  tags: deploy
+
+- name: Create database
+  copy:
+    content: ""
+    dest: "{{ BASE_PATH }}tmp/db.db"
+    mode: 0664
+  tags: deploy
+  when: not exists_result.stat.exists
+
+- name: Restart app
+  shell: |
+    docker-compose stop
+    MY_UID="$(id -u)" MY_GID="$(id -g)" docker-compose up -d
+  args:
+    chdir: '{{ BASE_PATH }}'
+  tags: deploy
+
+- name: Copy migrations files
+  copy:
+    src: '{{ playbook_dir }}/../internal/database/migrations'
+    dest: '{{ BASE_PATH }}/'
+  tags: deploy
+
+- name: Migrate
+  shell: docker-compose exec app migrate -database "sqlite3://tmp/db.db?query" -path migrations up
+  args:
+    chdir: '{{ BASE_PATH }}'
+  tags: deploy

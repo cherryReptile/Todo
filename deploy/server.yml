@@ -1,0 +1,7 @@
+- name: Prod
+  hosts:
+    - pavel-one
+  roles:
+    - srv
+  gather_facts: no
+  serial: 2
