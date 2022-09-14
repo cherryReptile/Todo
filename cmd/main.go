@@ -12,6 +12,8 @@ func main() {
 	app := new(base.App)
 	app.Init()
 	app.POST("/", app.RouterController.Start)
+	app.GET("/setWebhook", app.RouterController.SetWebhook)
+	app.GET("/setCommands", app.RouterController.SetCommands)
 
 	go app.ApiRun("3000", errChan)
 

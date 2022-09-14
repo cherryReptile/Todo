@@ -58,7 +58,7 @@ func (c *CategoryController) List(lastMessage telegram.MessageWrapper, text stri
 	var botMsg telegram.BotMessage
 
 	if categories == nil {
-		botMsg, err = c.TgService.SendMessage(lastMessage.Message.From.Id, "У вас ещё нет категорий, используйте 👉 /categoryCreate")
+		botMsg, err = c.TgService.SendMessage(lastMessage.Message.From.Id, "У вас ещё нет категорий, используйте 👉 /category_сreate")
 	} else {
 		botMsg, err = c.TgService.SendInlineKeyboard(text, lastMessage.Message.From.Id, btnMethod, categories)
 	}

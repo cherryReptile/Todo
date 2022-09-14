@@ -1,6 +1,7 @@
 package router
 
 import (
+	"fmt"
 	"github.com/cherryReptile/Todo/internal/controllers"
 	"github.com/cherryReptile/Todo/internal/database"
 	"github.com/cherryReptile/Todo/internal/models"
@@ -27,12 +28,37 @@ func NewRouter(Worker *queue.JobWorker, db *database.SqlLite, service *telegram.
 	}
 }
 
-func (router *Router) Start(w http.ResponseWriter, r *http.Request) {
-	lastMessage, err := router.getLastMsg()
+func (router *Router) SetWebhook(w http.ResponseWriter, r *http.Request) {
+	err := router.TgService.SetWebhook()
 
 	if err != nil {
 		handleError(w, err)
 		return
+	}
+
+	responseJson(w, "SetWebhook() is true")
+}
+
+func (router *Router) SetCommands(w http.ResponseWriter, r *http.Request) {
+	err := router.TgService.SetCommands()
+
+	if err != nil {
+		handleError(w, err)
+	}
+}
+
+func (router *Router) Start(w http.ResponseWriter, r *http.Request) {
+	//lastMessage, err := router.getLastMsg()
+	lastMessage, err := router.getFromWebhook(r)
+	fmt.Println(lastMessage)
+
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+
+	if lastMessage.CallbackQuery.Id != "" {
+		go controllers.AnswerToCallback(lastMessage, router.TgService)
 	}
 
 	var user models.User
@@ -59,7 +85,7 @@ func (router *Router) Start(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var modelFromCallback telegram.ModelFromCallback
-	lastCommand, err := router.toCallback(lastMessage, &modelFromCallback)
+	lastCommand, err := router.lastCommandWithCallback(lastMessage, &modelFromCallback)
 
 	if err != nil {
 		handleError(w, err)

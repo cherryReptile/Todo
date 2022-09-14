@@ -21,8 +21,6 @@ func NewTodoController(db *database.SqlLite, service *telegram.Service) *TodoCon
 }
 
 func (t *TodoController) Create(lastMessage telegram.MessageWrapper, modelFromCallback telegram.ModelFromCallback) error {
-	go AnswerToCallback(lastMessage, t.TgService)
-
 	var category models.Category
 	category.Get(t.DB, modelFromCallback.Id)
 
