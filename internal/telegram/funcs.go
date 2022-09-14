@@ -7,44 +7,106 @@ import (
 	"github.com/cherryReptile/Todo/internal/models"
 	"log"
 	"net/http"
+	"os"
 	"time"
 )
 
-// Tg metgods
+// Tg methods
 
-func (s *Service) GetUpdates() (Updates, error) {
-	var updates Updates
-	var allowedU []string
+func (s *Service) SetWebhook() error {
+	toWh := struct {
+		Url string `json:"url"`
+	}{}
 
-	toUpdates := ToUpdates{
-		AllowedUpdates: allowedU,
-	}
-
-	res, err := s.DoRequest("getUpdates", "POST", toUpdates)
+	toWh.Url = os.Getenv("WEBHOOK_URL")
+	res, err := s.DoRequest("setWebhook", "POST", toWh)
 
 	if err != nil {
-		return updates, err
+		return err
 	}
+	fmt.Println(res)
 
 	defer res.Body.Close()
 
 	if res.StatusCode != http.StatusOK {
-		return updates, errors.New(fmt.Sprintf("telegram status %v", res.StatusCode))
+		return errors.New(fmt.Sprintf("telegram status %v", res.StatusCode))
 	}
 
-	err = s.AfterRequest(res, &updates)
+	return nil
+}
+
+func (s *Service) SetCommands() error {
+	var commands ToBotCommands
+	var command Command
+
+	command.SetFields("/start", "начало")
+	commands.Commands[0] = command
+	command.SetFields("/category_create", "создать категорию для todo")
+	commands.Commands[1] = command
+	command.SetFields("/list", "все категории и их todo(которые можно удалить при нажатии)")
+	commands.Commands[2] = command
+	command.SetFields("/category_delete", "удалить категорию")
+	commands.Commands[3] = command
+	command.SetFields("/todo_create", "создать todo")
+	commands.Commands[4] = command
+	command.SetFields("/todo_delete", "удалить todo")
+	commands.Commands[5] = command
+
+	res, err := s.DoRequest("setMyCommands", "POST", commands)
 
 	if err != nil {
-		return updates, err
+		return err
+	}
+	fmt.Println(res)
+
+	defer res.Body.Close()
+
+	if res.StatusCode != http.StatusOK {
+		return errors.New(fmt.Sprintf("telegram status %v", res.StatusCode))
 	}
 
-	if !updates.OK {
-		err = errors.New(fmt.Sprintf("telegram not ok"))
-		return updates, err
+	if err != nil {
+		return err
 	}
 
-	return updates, nil
+	return nil
 }
+
+//\ for long polling
+//
+//func (s *Service) GetUpdates() (Updates, error) {
+//	var updates Updates
+//	var allowedU []string
+//
+//	toUpdates := ToUpdates{
+//		AllowedUpdates: allowedU,
+//	}
+//
+//	res, err := s.DoRequest("getUpdates", "POST", toUpdates)
+//
+//	if err != nil {
+//		return updates, err
+//	}
+//
+//	defer res.Body.Close()
+//
+//	if res.StatusCode != http.StatusOK {
+//		return updates, errors.New(fmt.Sprintf("telegram status %v", res.StatusCode))
+//	}
+//
+//	err = s.AfterRequest(res, &updates)
+//
+//	if err != nil {
+//		return updates, err
+//	}
+//
+//	if !updates.OK {
+//		err = errors.New(fmt.Sprintf("telegram not ok"))
+//		return updates, err
+//	}
+//
+//	return updates, nil
+//}
 
 func (s *Service) SendMessage(chatId uint, message string) (BotMessage, error) {
 	var responseMsg BotMessage
@@ -75,6 +137,8 @@ func (s *Service) SendMessage(chatId uint, message string) (BotMessage, error) {
 
 	return responseMsg, nil
 }
+
+//\ this need for not receive overhead callbacks
 
 func (s *Service) AnswerCallbackQuery(callbackId string, text string) error {
 	toCallback := ToAnswerCallback{

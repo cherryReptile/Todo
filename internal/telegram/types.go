@@ -123,6 +123,22 @@ type ToInlineKeyboardBtn struct {
 	ReplyMarkup ReplyMarkup `json:"reply_markup"`
 }
 
+// commands
+
+type ToBotCommands struct {
+	Commands [6]Command `json:"commands"`
+}
+
+type Command struct {
+	Name        string `json:"command"`
+	Description string `json:"description"`
+}
+
+func (c *Command) SetFields(name, description string) {
+	c.Name = name
+	c.Description = description
+}
+
 //Just id and type model for callback
 
 type ModelFromCallback struct {
