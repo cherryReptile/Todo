@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/cherryReptile/Todo/internal/database"
-	"github.com/cherryReptile/Todo/internal/queue"
 	"github.com/cherryReptile/Todo/internal/router"
 	"github.com/cherryReptile/Todo/internal/telegram"
 	"github.com/gorilla/mux"
@@ -23,17 +22,17 @@ type App struct {
 
 func (a *App) Init() {
 	err := godotenv.Load(".env")
+
 	if err != nil {
-		log.Fatalf("[FATAL] Not loading environment: %v", err)
+		log.Fatalf("[FATAL] failead to load .env file: %v", err)
 	}
 
 	db := database.Connect()
-	q := queue.Run()
 	service := new(telegram.Service)
 	service.Init(&db)
 	a.DB = &db
 	a.MuxRouter = mux.NewRouter()
-	a.RouterController = router.NewRouter(&q, a.DB, service)
+	a.RouterController = router.NewRouter(a.DB, service)
 }
 
 func (a *App) ApiRun(port string, ch chan error) {

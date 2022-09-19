@@ -5,22 +5,19 @@ import (
 	"github.com/cherryReptile/Todo/internal/controllers"
 	"github.com/cherryReptile/Todo/internal/database"
 	"github.com/cherryReptile/Todo/internal/models"
-	"github.com/cherryReptile/Todo/internal/queue"
 	"github.com/cherryReptile/Todo/internal/telegram"
 	"net/http"
 )
 
 type Router struct {
-	Worker             *queue.JobWorker
 	DB                 *database.SqlLite
 	TgService          *telegram.Service
 	CategoryController *controllers.CategoryController
 	TodoController     *controllers.TodoController
 }
 
-func NewRouter(Worker *queue.JobWorker, db *database.SqlLite, service *telegram.Service) *Router {
+func NewRouter(db *database.SqlLite, service *telegram.Service) *Router {
 	return &Router{
-		Worker:             Worker,
 		DB:                 db,
 		TgService:          service,
 		CategoryController: controllers.NewCategoryController(db, service),
